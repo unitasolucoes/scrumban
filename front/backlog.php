@@ -50,6 +50,17 @@ echo "<script src='" . Plugin::getWebDir('scrumban') . "/js/scrumban.js'></scrip
 $board = new PluginScrumbanBoard();
 $board->getFromDB($board_id);
 
+if (!PluginScrumbanTeam::canUserAccessBoard($_SESSION['glpiID'], $board_id)) {
+   echo "<div class='container mt-4'>";
+   echo "<div class='alert alert-danger'>";
+   echo "<h4 class='alert-heading'>" . __('Acesso negado', 'scrumban') . "</h4>";
+   echo "<p class='mb-0'>" . __('Você não possui permissão para visualizar este quadro. Escolha outro quadro ou contate o administrador da equipe.', 'scrumban') . "</p>";
+   echo "</div>";
+   echo "</div>";
+   Html::footer();
+   exit;
+}
+
 echo "<div class='agilepm-container'>";
 
 // Header
