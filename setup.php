@@ -1,6 +1,6 @@
 <?php
 
-define('PLUGIN_SCRUMBAN_VERSION', '1.0.0');
+define('PLUGIN_SCRUMBAN_VERSION', '2.0.0');
 
 /**
  * Inicialização do plugin

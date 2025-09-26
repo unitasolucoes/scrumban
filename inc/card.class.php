@@ -94,6 +94,25 @@ class PluginScrumbanCard extends CommonDBTM {
          }
       }
 
+      $acceptance_criteria = $this->getAcceptanceCriteria();
+      if (empty($acceptance_criteria)) {
+         $acceptance_criteria[] = [
+            'title' => '',
+            'description' => '',
+            'is_completed' => 0
+         ];
+      }
+
+      $test_scenarios = $this->getTestScenarios();
+      if (empty($test_scenarios)) {
+         $test_scenarios[] = [
+            'title' => '',
+            'description' => '',
+            'expected_result' => '',
+            'status' => 'pending'
+         ];
+      }
+
       echo "<tr class='tab_bg_1'>";
       echo "<td>" . __('Board', 'scrumban') . " *</td>";
       echo "<td>";
@@ -198,11 +217,284 @@ class PluginScrumbanCard extends CommonDBTM {
       echo "<td>";
       Ticket::dropdown(['name' => 'tickets_id', 'value' => $this->fields['tickets_id']]);
       echo "</td>";
+      echo "<td>" . __('External Reference', 'scrumban') . "</td>";
+      echo "<td>";
+      Html::autocompletionTextField($this, 'external_reference', ['size' => 30]);
+      echo "</td>";
+      echo "</tr>";
+
+      echo "<tr class='tab_bg_1'>";
+      echo "<td>" . __('Planned Delivery Date', 'scrumban') . "</td>";
+      echo "<td>";
+      Html::showDateField('planned_delivery_date', ['value' => $this->fields['planned_delivery_date']]);
+      echo "</td>";
+      echo "<td>" . __('Completion Date', 'scrumban') . "</td>";
+      echo "<td>";
+      Html::showDateTimeField('completed_at', ['value' => $this->fields['completed_at']]);
+      echo "</td>";
+      echo "</tr>";
+
+      echo "<tr class='tab_bg_1'>";
+      echo "<td>" . __('Definition of Ready (%)', 'scrumban') . "</td>";
+      echo "<td>";
+      echo "<input type='number' name='dor_percent' class='form-control' min='0' max='100' value='" . (int)$this->fields['dor_percent'] . "'>";
+      echo "</td>";
+      echo "<td>" . __('Definition of Done (%)', 'scrumban') . "</td>";
+      echo "<td>";
+      echo "<input type='number' name='dod_percent' class='form-control' min='0' max='100' value='" . (int)$this->fields['dod_percent'] . "'>";
+      echo "</td>";
+      echo "</tr>";
+
+      echo "<tr class='tab_bg_1'>";
+      echo "<td>" . __('Development Branch', 'scrumban') . "</td>";
+      echo "<td>";
+      Html::autocompletionTextField($this, 'development_branch', ['size' => 30]);
+      echo "</td>";
+      echo "<td>" . __('Pull Request', 'scrumban') . "</td>";
+      echo "<td>";
+      Html::autocompletionTextField($this, 'development_pull_request', ['size' => 30]);
+      echo "</td>";
+      echo "</tr>";
+
+      echo "<tr class='tab_bg_1'>";
+      echo "<td>" . __('Commits', 'scrumban') . "</td>";
+      echo "<td colspan='3'>";
+      echo "<textarea name='development_commits' rows='4' class='form-control'>" . htmlspecialchars((string)$this->fields['development_commits']) . "</textarea>";
+      echo "<p class='small text-muted mb-0'>" . __('One commit per line. You can include SHA or summary.', 'scrumban') . "</p>";
+      echo "</td>";
+      echo "</tr>";
+
+      echo "<tr class='tab_bg_1'>";
+      echo "<td colspan='4'>";
+      echo "<div class='mb-4'>";
+      echo "<div class='d-flex justify-content-between align-items-center mb-2'>";
+      echo "<h4 class='mb-0'>" . __('Acceptance Criteria', 'scrumban') . "</h4>";
+      echo "<button type='button' class='btn btn-outline-primary btn-sm' onclick='ScrumbanCardForm.addCriteriaRow()'>";
+      echo "<i class='fas fa-plus me-1'></i>" . __('Add Criterion', 'scrumban');
+      echo "</button>";
+      echo "</div>";
+      $criteria_count = count($acceptance_criteria);
+      echo "<div id='acceptance-criteria-list' class='scrumban-repeatable-list' data-next-index='" . $criteria_count . "'>";
+      foreach ($acceptance_criteria as $index => $criterion) {
+         echo "<div class='card mb-3 scrumban-repeatable-item'>";
+         echo "<div class='card-body'>";
+         echo "<div class='row g-3 align-items-end'>";
+         echo "<div class='col-md-6'>";
+         echo "<label class='form-label'>" . __('Title', 'scrumban') . "</label>";
+         echo "<input type='text' class='form-control' name='acceptance_criteria[$index][title]' value='" . htmlspecialchars((string)($criterion['title'] ?? '')) . "'>";
+         echo "</div>";
+         echo "<div class='col-md-4'>";
+         echo "<label class='form-label'>" . __('Status', 'scrumban') . "</label>";
+         echo "<select class='form-select' name='acceptance_criteria[$index][is_completed]'>";
+         $is_completed = !empty($criterion['is_completed']);
+         echo "<option value='0'" . (!$is_completed ? " selected" : "") . ">" . __('Pending', 'scrumban') . "</option>";
+         echo "<option value='1'" . ($is_completed ? " selected" : "") . ">" . __('Completed', 'scrumban') . "</option>";
+         echo "</select>";
+         echo "</div>";
+         echo "<div class='col-md-2 text-end'>";
+         echo "<label class='form-label d-block'>&nbsp;</label>";
+         echo "<button type='button' class='btn btn-outline-danger btn-sm' onclick='ScrumbanCardForm.removeRow(this)'><i class='fas fa-trash'></i></button>";
+         echo "</div>";
+         echo "<div class='col-12'>";
+         echo "<label class='form-label'>" . __('Description', 'scrumban') . "</label>";
+         echo "<textarea class='form-control' rows='2' name='acceptance_criteria[$index][description]'>" . htmlspecialchars((string)($criterion['description'] ?? '')) . "</textarea>";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
+      }
+      echo "</div>";
+      echo "</div>";
+
+      echo "<div class='mb-4'>";
+      echo "<div class='d-flex justify-content-between align-items-center mb-2'>";
+      echo "<h4 class='mb-0'>" . __('Test Scenarios', 'scrumban') . "</h4>";
+      echo "<button type='button' class='btn btn-outline-primary btn-sm' onclick='ScrumbanCardForm.addTestScenarioRow()'>";
+      echo "<i class='fas fa-plus me-1'></i>" . __('Add Scenario', 'scrumban');
+      echo "</button>";
+      echo "</div>";
+      $scenario_count = count($test_scenarios);
+      echo "<div id='test-scenarios-list' class='scrumban-repeatable-list' data-next-index='" . $scenario_count . "'>";
+      foreach ($test_scenarios as $index => $scenario) {
+         echo "<div class='card mb-3 scrumban-repeatable-item'>";
+         echo "<div class='card-body'>";
+         echo "<div class='row g-3 align-items-end'>";
+         echo "<div class='col-md-6'>";
+         echo "<label class='form-label'>" . __('Title', 'scrumban') . "</label>";
+         echo "<input type='text' class='form-control' name='test_scenarios[$index][title]' value='" . htmlspecialchars((string)($scenario['title'] ?? '')) . "'>";
+         echo "</div>";
+         echo "<div class='col-md-4'>";
+         echo "<label class='form-label'>" . __('Status', 'scrumban') . "</label>";
+         echo "<select class='form-select' name='test_scenarios[$index][status]'>";
+         $status = $scenario['status'] ?? 'pending';
+         $status_options = [
+            'pending' => __('Pending', 'scrumban'),
+            'passed' => __('Passed', 'scrumban'),
+            'failed' => __('Failed', 'scrumban')
+         ];
+         foreach ($status_options as $value => $label) {
+            $selected = ($status === $value) ? " selected" : "";
+            echo "<option value='" . $value . "'" . $selected . ">" . $label . "</option>";
+         }
+         echo "</select>";
+         echo "</div>";
+         echo "<div class='col-md-2 text-end'>";
+         echo "<label class='form-label d-block'>&nbsp;</label>";
+         echo "<button type='button' class='btn btn-outline-danger btn-sm' onclick='ScrumbanCardForm.removeRow(this)'><i class='fas fa-trash'></i></button>";
+         echo "</div>";
+         echo "<div class='col-md-6'>";
+         echo "<label class='form-label'>" . __('Description', 'scrumban') . "</label>";
+         echo "<textarea class='form-control' rows='2' name='test_scenarios[$index][description]'>" . htmlspecialchars((string)($scenario['description'] ?? '')) . "</textarea>";
+         echo "</div>";
+         echo "<div class='col-md-6'>";
+         echo "<label class='form-label'>" . __('Expected Result', 'scrumban') . "</label>";
+         echo "<textarea class='form-control' rows='2' name='test_scenarios[$index][expected_result]'>" . htmlspecialchars((string)($scenario['expected_result'] ?? '')) . "</textarea>";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
+         echo "</div>";
+      }
+      echo "</div>";
+      echo "</div>";
+
+      echo "<template id='acceptance-criteria-template'>";
+      echo "<div class='card mb-3 scrumban-repeatable-item'>";
+      echo "<div class='card-body'>";
+      echo "<div class='row g-3 align-items-end'>";
+      echo "<div class='col-md-6'>";
+      echo "<label class='form-label'>" . __('Title', 'scrumban') . "</label>";
+      echo "<input type='text' class='form-control' data-field='title'>";
+      echo "</div>";
+      echo "<div class='col-md-4'>";
+      echo "<label class='form-label'>" . __('Status', 'scrumban') . "</label>";
+      echo "<select class='form-select' data-field='is_completed'>";
+      echo "<option value='0'>" . __('Pending', 'scrumban') . "</option>";
+      echo "<option value='1'>" . __('Completed', 'scrumban') . "</option>";
+      echo "</select>";
+      echo "</div>";
+      echo "<div class='col-md-2 text-end'>";
+      echo "<label class='form-label d-block'>&nbsp;</label>";
+      echo "<button type='button' class='btn btn-outline-danger btn-sm' onclick='ScrumbanCardForm.removeRow(this)'><i class='fas fa-trash'></i></button>";
+      echo "</div>";
+      echo "<div class='col-12'>";
+      echo "<label class='form-label'>" . __('Description', 'scrumban') . "</label>";
+      echo "<textarea class='form-control' rows='2' data-field='description'></textarea>";
+      echo "</div>";
+      echo "</div>";
+      echo "</div>";
+      echo "</div>";
+      echo "</template>";
+
+      echo "<template id='test-scenario-template'>";
+      echo "<div class='card mb-3 scrumban-repeatable-item'>";
+      echo "<div class='card-body'>";
+      echo "<div class='row g-3 align-items-end'>";
+      echo "<div class='col-md-6'>";
+      echo "<label class='form-label'>" . __('Title', 'scrumban') . "</label>";
+      echo "<input type='text' class='form-control' data-field='title'>";
+      echo "</div>";
+      echo "<div class='col-md-4'>";
+      echo "<label class='form-label'>" . __('Status', 'scrumban') . "</label>";
+      echo "<select class='form-select' data-field='status'>";
+      echo "<option value='pending'>" . __('Pending', 'scrumban') . "</option>";
+      echo "<option value='passed'>" . __('Passed', 'scrumban') . "</option>";
+      echo "<option value='failed'>" . __('Failed', 'scrumban') . "</option>";
+      echo "</select>";
+      echo "</div>";
+      echo "<div class='col-md-2 text-end'>";
+      echo "<label class='form-label d-block'>&nbsp;</label>";
+      echo "<button type='button' class='btn btn-outline-danger btn-sm' onclick='ScrumbanCardForm.removeRow(this)'><i class='fas fa-trash'></i></button>";
+      echo "</div>";
+      echo "<div class='col-md-6'>";
+      echo "<label class='form-label'>" . __('Description', 'scrumban') . "</label>";
+      echo "<textarea class='form-control' rows='2' data-field='description'></textarea>";
+      echo "</div>";
+      echo "<div class='col-md-6'>";
+      echo "<label class='form-label'>" . __('Expected Result', 'scrumban') . "</label>";
+      echo "<textarea class='form-control' rows='2' data-field='expected_result'></textarea>";
+      echo "</div>";
+      echo "</div>";
+      echo "</div>";
+      echo "</div>";
+      echo "</template>";
+
+      echo "</td>";
+      echo "</tr>";
+
+      echo "<tr class='tab_bg_1'>";
       echo "<td>" . __('Active', 'scrumban') . "</td>";
       echo "<td>";
       Dropdown::showYesNo("is_active", $this->fields["is_active"]);
       echo "</td>";
+      echo "<td colspan='2'></td>";
       echo "</tr>";
+
+      static $card_form_script = false;
+      if (!$card_form_script) {
+         $card_form_script = true;
+         $script = <<<'JS'
+(function () {
+   function assignNames(root, prefix, index) {
+      root.querySelectorAll('[data-field]').forEach(function (element) {
+         var field = element.getAttribute('data-field');
+         element.setAttribute('name', prefix + '[' + index + '][' + field + ']');
+         if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            if (element.type === 'checkbox' || element.type === 'radio') {
+               element.checked = false;
+            } else {
+               element.value = '';
+            }
+         }
+         if (element.tagName === 'SELECT') {
+            element.selectedIndex = 0;
+         }
+      });
+   }
+
+   window.ScrumbanCardForm = window.ScrumbanCardForm || {};
+
+   window.ScrumbanCardForm.removeRow = function (button) {
+      var item = button.closest('.scrumban-repeatable-item');
+      if (item) {
+         item.remove();
+      }
+   };
+
+   window.ScrumbanCardForm.addCriteriaRow = function () {
+      var container = document.getElementById('acceptance-criteria-list');
+      if (!container) {
+         return;
+      }
+      var template = document.getElementById('acceptance-criteria-template');
+      if (!template) {
+         return;
+      }
+      var index = parseInt(container.dataset.nextIndex || container.children.length, 10);
+      var node = template.content.firstElementChild.cloneNode(true);
+      assignNames(node, 'acceptance_criteria', index);
+      container.appendChild(node);
+      container.dataset.nextIndex = index + 1;
+   };
+
+   window.ScrumbanCardForm.addTestScenarioRow = function () {
+      var container = document.getElementById('test-scenarios-list');
+      if (!container) {
+         return;
+      }
+      var template = document.getElementById('test-scenario-template');
+      if (!template) {
+         return;
+      }
+      var index = parseInt(container.dataset.nextIndex || container.children.length, 10);
+      var node = template.content.firstElementChild.cloneNode(true);
+      assignNames(node, 'test_scenarios', index);
+      container.appendChild(node);
+      container.dataset.nextIndex = index + 1;
+   };
+})();
+JS;
+         echo Html::scriptBlock($script);
+      }
 
       $this->showFormButtons($options);
       return true;
@@ -224,11 +516,13 @@ class PluginScrumbanCard extends CommonDBTM {
             'FROM' => $this->getTable(),
             'WHERE' => ['columns_id' => $input['columns_id']]
          ]);
-         
+
          foreach ($result as $row) {
             $input['position'] = ($row['max_pos'] ?? -1) + 1;
          }
       }
+
+      $input = $this->normalizeStructuredFields($input);
 
       $input['date_creation'] = $_SESSION['glpi_currenttime'];
       return $input;
@@ -243,7 +537,87 @@ class PluginScrumbanCard extends CommonDBTM {
          }
       }
 
+      $input = $this->normalizeStructuredFields($input);
+
       $input['date_mod'] = $_SESSION['glpi_currenttime'];
+      return $input;
+   }
+
+   private function normalizeStructuredFields(array $input) {
+      if (isset($input['dor_percent'])) {
+         $input['dor_percent'] = max(0, min(100, (int)$input['dor_percent']));
+      }
+
+      if (isset($input['dod_percent'])) {
+         $input['dod_percent'] = max(0, min(100, (int)$input['dod_percent']));
+      }
+
+      if (isset($input['development_commits'])) {
+         $lines = preg_split("/(\\r\\n|\\r|\\n)/", (string)$input['development_commits']);
+         $lines = array_filter(array_map('trim', $lines));
+         $input['development_commits'] = implode(PHP_EOL, $lines);
+      }
+
+      $criteria_source = $input['acceptance_criteria'] ?? ($_POST['acceptance_criteria'] ?? null);
+      if (is_array($criteria_source)) {
+         $normalized = [];
+         foreach ($criteria_source as $item) {
+            if (!is_array($item)) {
+               continue;
+            }
+            $title = trim((string)($item['title'] ?? ''));
+            $description = trim((string)($item['description'] ?? ''));
+            $is_completed = !empty($item['is_completed']) && $item['is_completed'] !== '0';
+
+            if ($title === '' && $description === '') {
+               continue;
+            }
+
+            $normalized[] = [
+               'title' => $title,
+               'description' => $description,
+               'is_completed' => $is_completed ? 1 : 0
+            ];
+         }
+
+         $input['acceptance_criteria'] = !empty($normalized)
+            ? json_encode($normalized, JSON_UNESCAPED_UNICODE)
+            : null;
+      }
+
+      $scenario_source = $input['test_scenarios'] ?? ($_POST['test_scenarios'] ?? null);
+      if (is_array($scenario_source)) {
+         $normalized = [];
+         foreach ($scenario_source as $item) {
+            if (!is_array($item)) {
+               continue;
+            }
+
+            $title = trim((string)($item['title'] ?? ''));
+            $description = trim((string)($item['description'] ?? ''));
+            $expected = trim((string)($item['expected_result'] ?? ''));
+            $status = $item['status'] ?? 'pending';
+            if (!in_array($status, ['pending', 'passed', 'failed'], true)) {
+               $status = 'pending';
+            }
+
+            if ($title === '' && $description === '' && $expected === '') {
+               continue;
+            }
+
+            $normalized[] = [
+               'title' => $title,
+               'description' => $description,
+               'expected_result' => $expected,
+               'status' => $status
+            ];
+         }
+
+         $input['test_scenarios'] = !empty($normalized)
+            ? json_encode($normalized, JSON_UNESCAPED_UNICODE)
+            : null;
+      }
+
       return $input;
    }
 
@@ -392,6 +766,64 @@ class PluginScrumbanCard extends CommonDBTM {
          'boards_id' => $board_id,
          'sprints_id' => 0
       ]);
+   }
+
+   function getAcceptanceCriteria() {
+      if (empty($this->fields['acceptance_criteria'])) {
+         return [];
+      }
+
+      $data = json_decode($this->fields['acceptance_criteria'], true);
+      if (!is_array($data)) {
+         return [];
+      }
+
+      $normalized = [];
+      foreach ($data as $item) {
+         if (!is_array($item)) {
+            continue;
+         }
+
+         $normalized[] = [
+            'title' => trim((string)($item['title'] ?? '')),
+            'description' => trim((string)($item['description'] ?? '')),
+            'is_completed' => !empty($item['is_completed']) ? 1 : 0
+         ];
+      }
+
+      return $normalized;
+   }
+
+   function getTestScenarios() {
+      if (empty($this->fields['test_scenarios'])) {
+         return [];
+      }
+
+      $data = json_decode($this->fields['test_scenarios'], true);
+      if (!is_array($data)) {
+         return [];
+      }
+
+      $normalized = [];
+      foreach ($data as $item) {
+         if (!is_array($item)) {
+            continue;
+         }
+
+         $status = $item['status'] ?? 'pending';
+         if (!in_array($status, ['pending', 'passed', 'failed'], true)) {
+            $status = 'pending';
+         }
+
+         $normalized[] = [
+            'title' => trim((string)($item['title'] ?? '')),
+            'description' => trim((string)($item['description'] ?? '')),
+            'expected_result' => trim((string)($item['expected_result'] ?? '')),
+            'status' => $status
+         ];
+      }
+
+      return $normalized;
    }
 
    /**
@@ -553,6 +985,8 @@ class PluginScrumbanCard extends CommonDBTM {
       $data = $this->fields;
       $data['labels'] = $this->getLabels();
       $data['activity'] = $this->getActivityHistory();
+      $data['acceptance_criteria'] = $this->getAcceptanceCriteria();
+      $data['test_scenarios'] = $this->getTestScenarios();
       return $data;
    }
 
