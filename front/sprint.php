@@ -2,10 +2,11 @@
 
 include ('../../../inc/includes.php');
 
+Html::header(__('Scrumban - Sprints', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "sprints");
+
 // Verificar quadros disponíveis
 $boards = PluginScrumbanBoard::getActiveBoards();
 if (empty($boards)) {
-   Html::header(__('Scrumban - Sprints', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "sprints");
    echo "<div class='center'>";
    echo "<h3>Nenhum quadro encontrado</h3>";
    echo "<p>Você precisa criar um quadro antes de gerenciar sprints.</p>";
@@ -17,43 +18,8 @@ if (empty($boards)) {
    exit;
 }
 
-$requested_board_id = isset($_GET['board_id']) ? intval($_GET['board_id']) : null;
-$accessible_board = null;
-
-foreach ($boards as $board_data) {
-   if (!PluginScrumbanTeam::canUserAccessBoard($_SESSION['glpiID'], $board_data['id'])) {
-      continue;
-   }
-
-   if ($requested_board_id !== null && $board_data['id'] == $requested_board_id) {
-      $accessible_board = $board_data;
-      break;
-   }
-
-   if ($accessible_board === null) {
-      $accessible_board = $board_data;
-   }
-}
-
-if ($accessible_board === null) {
-   Html::header(__('Scrumban - Sprints', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "sprints");
-   echo "<div class='container mt-3'>";
-   echo "<div class='alert alert-danger' role='alert'>";
-   echo __('Você não tem permissão para acessar nenhum quadro ativo.', 'scrumban');
-   echo "</div>";
-   echo "</div>";
-   Html::footer();
-   exit;
-}
-
-$board_id = (int)$accessible_board['id'];
-
-if ($requested_board_id !== null && $requested_board_id !== $board_id) {
-   Html::redirect($CFG_GLPI['root_doc'] . "/plugins/scrumban/front/sprint.php?board_id=" . $board_id);
-   exit;
-}
-
-Html::header(__('Scrumban - Sprints', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "sprints");
+// Pegar ID do quadro
+$board_id = isset($_GET['board_id']) ? intval($_GET['board_id']) : $boards[0]['id'];
 
 // Incluir CSS e JS específicos
 echo "<link rel='stylesheet' type='text/css' href='" . Plugin::getWebDir('scrumban') . "/css/scrumban.css'>";
