@@ -4,6 +4,7 @@
  */
 
 let currentTeamId = null;
+let currentTeamBoards = [];
 
 /**
  * Initialize teams functionality
@@ -75,11 +76,16 @@ function initializeBoardManagement() {
     if (addBoardForm) {
         addBoardForm.addEventListener('submit', handleAddBoard);
     }
-    
+
     // Add board button
     const addBoardBtn = document.getElementById('addBoardBtn');
     if (addBoardBtn) {
         addBoardBtn.addEventListener('click', openAddBoardModal);
+    }
+
+    const editPermissionsForm = document.getElementById('editBoardPermissionsForm');
+    if (editPermissionsForm) {
+        editPermissionsForm.addEventListener('submit', handleBoardPermissionsSubmit);
     }
 }
 
@@ -240,7 +246,9 @@ function populateTeamManagement(data) {
     const team = data.team;
     const members = data.members;
     const boards = data.boards;
-    
+
+    currentTeamBoards = Array.isArray(boards) ? boards : [];
+
     // Populate team info
     document.getElementById('edit_team_id').value = team.id;
     document.getElementById('edit_team_name').value = team.name || '';
@@ -319,6 +327,8 @@ function populateMembersList(members) {
  */
 function populateBoardsList(boards) {
     const container = document.getElementById('team-boards-list');
+
+    currentTeamBoards = Array.isArray(boards) ? boards : [];
     
     if (!boards || boards.length === 0) {
         container.innerHTML = '<div class="alert alert-info">No boards associated with this team yet.</div>';
@@ -630,7 +640,60 @@ function removeBoardFromTeam(teamId, boardId) {
  * Edit board permissions (placeholder)
  */
 function editBoardPermissions(teamId, boardId) {
-    showNotification('Board permissions editor - coming soon!', 'info');
+    const board = currentTeamBoards.find(board => Number(board.id) === Number(boardId));
+
+    if (!board) {
+        showNotification('Board not found for editing permissions.', 'error');
+        return;
+    }
+
+    const form = document.getElementById('editBoardPermissionsForm');
+    if (!form) {
+        showNotification('Permissions form not available.', 'error');
+        return;
+    }
+
+    form.querySelector('[name="team_id"]').value = teamId;
+    form.querySelector('[name="board_id"]').value = boardId;
+    document.getElementById('edit_board_name').textContent = board.name || '';
+    document.getElementById('edit_board_can_edit').checked = !!Number(board.can_edit);
+    document.getElementById('edit_board_can_manage').checked = !!Number(board.can_manage);
+
+    const modal = new bootstrap.Modal(document.getElementById('editBoardPermissionsModal'));
+    modal.show();
+}
+
+function handleBoardPermissionsSubmit(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    formData.append('action', 'update_board_permissions');
+    formData.set('can_edit', form.querySelector('[name="can_edit"]').checked ? '1' : '0');
+    formData.set('can_manage', form.querySelector('[name="can_manage"]').checked ? '1' : '0');
+
+    fetch(getPluginUrl() + '/ajax/team.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Board permissions updated successfully!', 'success');
+            const modalElement = document.getElementById('editBoardPermissionsModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+            loadTeamManagement(currentTeamId);
+        } else {
+            showNotification('Error updating permissions: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Network error occurred', 'error');
+    });
 }
 
 /**
