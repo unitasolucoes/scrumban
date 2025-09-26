@@ -169,6 +169,44 @@ echo "</div>";
                   <div id="team-boards-list">
                      <!-- Boards will be loaded here -->
                   </div>
+                  <div id="board-permissions-editor" class="card mt-3 d-none">
+                     <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                           <h6 class="mb-0"><?php echo __('Board Permissions', 'scrumban'); ?></h6>
+                           <small class="text-muted" id="board-permissions-board-name"></small>
+                        </div>
+                        <button type="button" class="btn-close" id="closeBoardPermissions" aria-label="<?php echo __('Close', 'scrumban'); ?>"></button>
+                     </div>
+                     <form id="boardPermissionsForm">
+                        <input type="hidden" name="team_id" id="board_permissions_team_id">
+                        <input type="hidden" name="board_id" id="board_permissions_board_id">
+                        <div class="card-body">
+                           <div id="board-permissions-feedback" class="alert d-none" role="alert"></div>
+                           <p class="text-muted small mb-4"><?php echo __('Adjust the permissions granted to this team for the selected board.', 'scrumban'); ?></p>
+                           <div class="form-check form-switch mb-3">
+                              <input class="form-check-input" type="checkbox" id="board_can_edit" name="can_edit">
+                              <label class="form-check-label" for="board_can_edit">
+                                 <strong><?php echo __('Can edit', 'scrumban'); ?></strong>
+                                 <span class="d-block text-muted small"><?php echo __('Allow editing cards and sprint information.', 'scrumban'); ?></span>
+                              </label>
+                           </div>
+                           <div class="form-check form-switch mb-3">
+                              <input class="form-check-input" type="checkbox" id="board_can_manage" name="can_manage">
+                              <label class="form-check-label" for="board_can_manage">
+                                 <strong><?php echo __('Can manage', 'scrumban'); ?></strong>
+                                 <span class="d-block text-muted small"><?php echo __('Allow configuration of board settings and columns.', 'scrumban'); ?></span>
+                              </label>
+                           </div>
+                           <div class="alert alert-info mb-0">
+                              <i class="fas fa-eye me-2"></i><?php echo __('View access is always granted to associated teams.', 'scrumban'); ?>
+                           </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-end gap-2">
+                           <button type="button" class="btn btn-outline-secondary" id="cancelBoardPermissions"><?php echo __('Cancel', 'scrumban'); ?></button>
+                           <button type="submit" class="btn btn-primary"><?php echo __('Save Changes', 'scrumban'); ?></button>
+                        </div>
+                     </form>
+                  </div>
                </div>
             </div>
          </div>
