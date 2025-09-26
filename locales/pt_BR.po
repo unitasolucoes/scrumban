@@ -1,0 +1,246 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: scrumban 1.0.0\n"
+"Language: pt_BR\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Scrumban"
+msgstr "Scrumban"
+
+msgid "Equipes"
+msgstr "Equipes"
+
+msgid "Gerencie equipes e permissões de acesso aos quadros Kanban."
+msgstr "Gerencie equipes e permissões de acesso aos quadros Kanban."
+
+msgid "Nova equipe"
+msgstr "Nova equipe"
+
+msgid "Nenhuma equipe cadastrada ainda. Crie a primeira equipe para iniciar o controle de acesso."
+msgstr "Nenhuma equipe cadastrada ainda. Crie a primeira equipe para iniciar o controle de acesso."
+
+msgid "Função: "
+msgstr "Função: "
+
+msgid "Ativa"
+msgstr "Ativa"
+
+msgid "Inativa"
+msgstr "Inativa"
+
+msgid "Detalhes"
+msgstr "Detalhes"
+
+msgid "Membros"
+msgstr "Membros"
+
+msgid "Quadros Kanban"
+msgstr "Quadros Kanban"
+
+msgid "Selecione um quadro"
+msgstr "Selecione um quadro"
+
+msgid "Você ainda não possui acesso a nenhum quadro. Solicite acesso a uma equipe ou crie um novo quadro."
+msgstr "Você ainda não possui acesso a nenhum quadro. Solicite acesso a uma equipe ou crie um novo quadro."
+
+msgid "Novo card"
+msgstr "Novo card"
+
+msgid "Informações principais"
+msgstr "Informações principais"
+
+msgid "Responsável"
+msgstr "Responsável"
+
+msgid "Solicitante"
+msgstr "Solicitante"
+
+msgid "Planejado"
+msgstr "Planejado"
+
+msgid "Conclusão"
+msgstr "Conclusão"
+
+msgid "Sprint"
+msgstr "Sprint"
+
+msgid "Labels"
+msgstr "Etiquetas"
+
+msgid "Descrição detalhada"
+msgstr "Descrição detalhada"
+
+msgid "Anexos"
+msgstr "Anexos"
+
+msgid "Informações de desenvolvimento"
+msgstr "Informações de desenvolvimento"
+
+msgid "Branch"
+msgstr "Branch"
+
+msgid "Pull Request"
+msgstr "Pull Request"
+
+msgid "Commits"
+msgstr "Commits"
+
+msgid "Critérios"
+msgstr "Critérios"
+
+msgid "Definition of Ready"
+msgstr "Definition of Ready"
+
+msgid "Definition of Done"
+msgstr "Definition of Done"
+
+msgid "Critérios de aceitação"
+msgstr "Critérios de aceitação"
+
+msgid "Adicionar critério"
+msgstr "Adicionar critério"
+
+msgid "Cenários de teste"
+msgstr "Cenários de teste"
+
+msgid "Adicionar cenário"
+msgstr "Adicionar cenário"
+
+msgid "Nenhum critério cadastrado"
+msgstr "Nenhum critério cadastrado"
+
+msgid "Nenhum cenário cadastrado"
+msgstr "Nenhum cenário cadastrado"
+
+msgid "Selecionar usuário"
+msgstr "Selecionar usuário"
+
+msgid "Membros da equipe"
+msgstr "Membros da equipe"
+
+msgid "Membro"
+msgstr "Membro"
+
+msgid "Líder"
+msgstr "Líder"
+
+msgid "Administrador"
+msgstr "Administrador"
+
+msgid "Adicionar membro"
+msgstr "Adicionar membro"
+
+msgid "Nenhum membro cadastrado"
+msgstr "Nenhum membro cadastrado"
+
+msgid "Equipe não encontrada"
+msgstr "Equipe não encontrada"
+
+msgid "Nome do card"
+msgstr "Nome do card"
+
+msgid "Comentários"
+msgstr "Comentários"
+
+msgid "Adicionar comentário..."
+msgstr "Adicionar comentário..."
+
+msgid "Histórico"
+msgstr "Histórico"
+
+msgid "Excluir"
+msgstr "Excluir"
+
+msgid "Salvar"
+msgstr "Salvar"
+
+msgid "Dashboard Scrumban"
+msgstr "Dashboard Scrumban"
+
+msgid "Métricas de equipe e andamento das entregas."
+msgstr "Métricas de equipe e andamento das entregas."
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Selecione uma equipe para visualizar estatísticas."
+msgstr "Selecione uma equipe para visualizar estatísticas."
+
+msgid "Quadro"
+msgstr "Quadro"
+
+msgid "Cards"
+msgstr "Cards"
+
+msgid "Story Points"
+msgstr "Story Points"
+
+msgid "Resumo da equipe"
+msgstr "Resumo da equipe"
+
+msgid "Total consolidado considerando todos os quadros da equipe selecionada."
+msgstr "Total consolidado considerando todos os quadros da equipe selecionada."
+
+msgid "Total de cards"
+msgstr "Total de cards"
+
+msgid "Ação desconhecida"
+msgstr "Ação desconhecida"
+
+msgid "Quadro não encontrado"
+msgstr "Quadro não encontrado"
+
+msgid "Card não encontrado"
+msgstr "Card não encontrado"
+
+msgid "Acesso negado"
+msgstr "Acesso negado"
+
+msgid "Card criado por %s"
+msgstr "Card criado por %s"
+
+msgid "Card atualizado"
+msgstr "Card atualizado"
+
+msgid "Card removido"
+msgstr "Card removido"
+
+msgid "Todos os responsáveis"
+msgstr "Todos os responsáveis"
+
+msgid "Todos os tipos"
+msgstr "Todos os tipos"
+
+msgid "Todas as prioridades"
+msgstr "Todas as prioridades"
+
+msgid "Nome é obrigatório"
+msgstr "Nome é obrigatório"
+
+msgid "Dados inválidos"
+msgstr "Dados inválidos"
+
+msgid "Registro inválido"
+msgstr "Registro inválido"
+
+msgid "Card inválido"
+msgstr "Card inválido"
+
+msgid "Comentário inválido"
+msgstr "Comentário inválido"
+
+msgid "Movimentação inválida"
+msgstr "Movimentação inválida"
+
+msgid "Sem permissão para editar este quadro"
+msgstr "Sem permissão para editar este quadro"
+
+msgid "Tipo de Issue"
+msgstr "Tipo de Issue"
+
+msgid "Prioridade"
+msgstr "Prioridade"
+
+msgid "Token CSRF inválido"
+msgstr "Token CSRF inválido"
