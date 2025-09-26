@@ -63,20 +63,6 @@ function plugin_scrumban_install() {
       $DB->queryOrDie($query, $DB->error());
    }
 
-   // Update boards table to support teams (if not already updated)
-   $boards_fields = $DB->listFields("glpi_plugin_scrumban_boards");
-   
-   if (!isset($boards_fields['teams_id'])) {
-      $query = "ALTER TABLE `glpi_plugin_scrumban_boards` 
-                ADD COLUMN `teams_id` int unsigned NOT NULL default '0' AFTER `entities_id`,
-                ADD COLUMN `visibility` enum('public','team','private') NOT NULL default 'public' AFTER `teams_id`,
-                ADD COLUMN `users_id_created` int unsigned NOT NULL default '0' AFTER `visibility`,
-                ADD KEY `teams_id` (`teams_id`),
-                ADD KEY `visibility` (`visibility`),
-                ADD KEY `users_id_created` (`users_id_created`)";
-      $DB->queryOrDie($query, $DB->error());
-   }
-
    // Create boards table if it doesn't exist
    if (!$DB->tableExists("glpi_plugin_scrumban_boards")) {
       $query = "CREATE TABLE `glpi_plugin_scrumban_boards` (
@@ -97,8 +83,22 @@ function plugin_scrumban_install() {
          KEY `users_id_created` (`users_id_created`),
          KEY `is_active` (`is_active`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;";
-      
+
       $DB->queryOrDie($query, $DB->error());
+   } else {
+      // Update boards table to support teams (if not already updated)
+      $boards_fields = $DB->listFields("glpi_plugin_scrumban_boards");
+
+      if (!isset($boards_fields['teams_id'])) {
+         $query = "ALTER TABLE `glpi_plugin_scrumban_boards`
+                   ADD COLUMN `teams_id` int unsigned NOT NULL default '0' AFTER `entities_id`,
+                   ADD COLUMN `visibility` enum('public','team','private') NOT NULL default 'public' AFTER `teams_id`,
+                   ADD COLUMN `users_id_created` int unsigned NOT NULL default '0' AFTER `visibility`,
+                   ADD KEY `teams_id` (`teams_id`),
+                   ADD KEY `visibility` (`visibility`),
+                   ADD KEY `users_id_created` (`users_id_created`)";
+         $DB->queryOrDie($query, $DB->error());
+      }
    }
 
    // Create columns table
@@ -135,10 +135,20 @@ function plugin_scrumban_install() {
          `story_points` int NOT NULL default '0',
          `assignee` varchar(255) collate utf8mb4_unicode_ci,
          `reporter` varchar(255) collate utf8mb4_unicode_ci,
+         `external_reference` varchar(255) collate utf8mb4_unicode_ci,
          `position` int NOT NULL default '0',
          `due_date` date NULL default NULL,
+         `planned_delivery_date` date NULL default NULL,
+         `completed_at` datetime NULL default NULL,
          `is_active` tinyint NOT NULL default '1',
          `tickets_id` int unsigned NOT NULL default '0',
+         `development_branch` varchar(255) collate utf8mb4_unicode_ci,
+         `development_pull_request` varchar(255) collate utf8mb4_unicode_ci,
+         `development_commits` text collate utf8mb4_unicode_ci,
+         `dor_percent` tinyint unsigned NOT NULL default '0',
+         `dod_percent` tinyint unsigned NOT NULL default '0',
+         `acceptance_criteria` longtext collate utf8mb4_unicode_ci,
+         `test_scenarios` longtext collate utf8mb4_unicode_ci,
          `date_creation` timestamp NULL default NULL,
          `date_mod` timestamp NULL default NULL,
          PRIMARY KEY (`id`),
@@ -148,9 +158,48 @@ function plugin_scrumban_install() {
          KEY `tickets_id` (`tickets_id`),
          KEY `assignee` (`assignee`),
          KEY `type` (`type`),
-         KEY `priority` (`priority`)
+         KEY `priority` (`priority`),
+         KEY `planned_delivery_date` (`planned_delivery_date`),
+         KEY `completed_at` (`completed_at`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;";
-      
+
+      $DB->queryOrDie($query, $DB->error());
+   }
+
+   if (!$DB->tableExists("glpi_plugin_scrumban_card_criteria")) {
+      $query = "CREATE TABLE `glpi_plugin_scrumban_card_criteria` (
+         `id` int unsigned NOT NULL auto_increment,
+         `cards_id` int unsigned NOT NULL,
+         `title` varchar(255) collate utf8mb4_unicode_ci NOT NULL default '',
+         `description` text collate utf8mb4_unicode_ci,
+         `is_completed` tinyint NOT NULL default '0',
+         `position` int NOT NULL default '0',
+         `date_creation` timestamp NULL default NULL,
+         `date_mod` timestamp NULL default NULL,
+         PRIMARY KEY (`id`),
+         KEY `cards_id` (`cards_id`),
+         KEY `is_completed` (`is_completed`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;";
+
+      $DB->queryOrDie($query, $DB->error());
+   }
+
+   if (!$DB->tableExists("glpi_plugin_scrumban_card_test_scenarios")) {
+      $query = "CREATE TABLE `glpi_plugin_scrumban_card_test_scenarios` (
+         `id` int unsigned NOT NULL auto_increment,
+         `cards_id` int unsigned NOT NULL,
+         `title` varchar(255) collate utf8mb4_unicode_ci NOT NULL default '',
+         `description` text collate utf8mb4_unicode_ci,
+         `expected_result` text collate utf8mb4_unicode_ci,
+         `status` enum('pending','passed','failed') NOT NULL default 'pending',
+         `position` int NOT NULL default '0',
+         `date_creation` timestamp NULL default NULL,
+         `date_mod` timestamp NULL default NULL,
+         PRIMARY KEY (`id`),
+         KEY `cards_id` (`cards_id`),
+         KEY `status` (`status`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;";
+
       $DB->queryOrDie($query, $DB->error());
    }
 
@@ -254,6 +303,8 @@ function plugin_scrumban_uninstall() {
       'glpi_plugin_scrumban_attachments',
       'glpi_plugin_scrumban_comments',
       'glpi_plugin_scrumban_labels',
+      'glpi_plugin_scrumban_card_test_scenarios',
+      'glpi_plugin_scrumban_card_criteria',
       'glpi_plugin_scrumban_cards',
       'glpi_plugin_scrumban_sprints',
       'glpi_plugin_scrumban_columns',
@@ -508,7 +559,7 @@ function insertDefaultData($DB) {
  */
 function plugin_scrumban_update_200() {
    global $DB;
-   
+
    $migration = new Migration(200);
    
    // Teams table
@@ -587,6 +638,98 @@ function plugin_scrumban_update_200() {
    return true;
 }
 
+function plugin_scrumban_update_201() {
+   global $DB;
+
+   $migration = new Migration(201);
+
+   if ($DB->tableExists('glpi_plugin_scrumban_cards')) {
+      $cards_fields = $DB->listFields('glpi_plugin_scrumban_cards');
+
+      if (!isset($cards_fields['external_reference'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'external_reference', "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+      }
+
+      if (!isset($cards_fields['planned_delivery_date'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'planned_delivery_date', 'date DEFAULT NULL');
+      }
+
+      if (!isset($cards_fields['completed_at'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'completed_at', 'datetime DEFAULT NULL');
+      }
+
+      if (!isset($cards_fields['development_branch'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'development_branch', "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+      }
+
+      if (!isset($cards_fields['development_pull_request'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'development_pull_request', "varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+      }
+
+      if (!isset($cards_fields['development_commits'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'development_commits', "text COLLATE utf8mb4_unicode_ci");
+      }
+
+      if (!isset($cards_fields['dor_percent'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'dor_percent', "tinyint unsigned NOT NULL DEFAULT '0'");
+      }
+
+      if (!isset($cards_fields['dod_percent'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'dod_percent', "tinyint unsigned NOT NULL DEFAULT '0'");
+      }
+
+      if (!isset($cards_fields['acceptance_criteria'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'acceptance_criteria', "longtext COLLATE utf8mb4_unicode_ci");
+      }
+
+      if (!isset($cards_fields['test_scenarios'])) {
+         $migration->addField('glpi_plugin_scrumban_cards', 'test_scenarios', "longtext COLLATE utf8mb4_unicode_ci");
+      }
+
+      $migration->addKey('glpi_plugin_scrumban_cards', ['planned_delivery_date']);
+      $migration->addKey('glpi_plugin_scrumban_cards', ['completed_at']);
+   }
+
+   $migration->executeMigration();
+
+   if (!$DB->tableExists('glpi_plugin_scrumban_card_criteria')) {
+      $DB->queryOrDie("CREATE TABLE `glpi_plugin_scrumban_card_criteria` (
+         `id` int unsigned NOT NULL auto_increment,
+         `cards_id` int unsigned NOT NULL,
+         `title` varchar(255) collate utf8mb4_unicode_ci NOT NULL default '',
+         `description` text collate utf8mb4_unicode_ci,
+         `is_completed` tinyint NOT NULL default '0',
+         `position` int NOT NULL default '0',
+         `date_creation` timestamp NULL default NULL,
+         `date_mod` timestamp NULL default NULL,
+         PRIMARY KEY (`id`),
+         KEY `cards_id` (`cards_id`),
+         KEY `is_completed` (`is_completed`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;", $DB->error());
+   }
+
+   if (!$DB->tableExists('glpi_plugin_scrumban_card_test_scenarios')) {
+      $DB->queryOrDie("CREATE TABLE `glpi_plugin_scrumban_card_test_scenarios` (
+         `id` int unsigned NOT NULL auto_increment,
+         `cards_id` int unsigned NOT NULL,
+         `title` varchar(255) collate utf8mb4_unicode_ci NOT NULL default '',
+         `description` text collate utf8mb4_unicode_ci,
+         `expected_result` text collate utf8mb4_unicode_ci,
+         `status` enum('pending','passed','failed') NOT NULL default 'pending',
+         `position` int NOT NULL default '0',
+         `date_creation` timestamp NULL default NULL,
+         `date_mod` timestamp NULL default NULL,
+         PRIMARY KEY (`id`),
+         KEY `cards_id` (`cards_id`),
+         KEY `status` (`status`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;", $DB->error());
+   }
+
+   plugin_scrumban_create_indexes();
+
+   return true;
+}
+
 /**
  * Create database indexes for performance
  */
@@ -613,7 +756,14 @@ function plugin_scrumban_create_indexes() {
       'glpi_plugin_scrumban_cards' => [
          'board_sprint' => ['boards_id', 'sprints_id'],
          'assignee_active' => ['assignee', 'is_active'],
-         'type_priority' => ['type', 'priority']
+         'type_priority' => ['type', 'priority'],
+         'plan_dates' => ['planned_delivery_date', 'completed_at']
+      ],
+      'glpi_plugin_scrumban_card_criteria' => [
+         'card_state' => ['cards_id', 'is_completed']
+      ],
+      'glpi_plugin_scrumban_card_test_scenarios' => [
+         'card_status' => ['cards_id', 'status']
       ]
    ];
    

@@ -176,6 +176,51 @@ echo "</div>";
    </div>
 </div>
 
+<!-- Modal for editing board permissions -->
+<div class="modal fade" id="editBoardPermissionsModal" tabindex="-1">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title">
+               <i class="fas fa-shield-alt me-2"></i><?php echo __('Board Permissions', 'scrumban'); ?>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+         </div>
+         <form id="editBoardPermissionsForm">
+            <div class="modal-body">
+               <input type="hidden" name="team_id" value="">
+               <input type="hidden" name="board_id" value="">
+
+               <div class="mb-3">
+                  <h6 class="mb-0" id="edit_board_name"></h6>
+                  <p class="text-muted small mb-0"><?php echo __('Defina os níveis de acesso para os membros desta equipe neste quadro.', 'scrumban'); ?></p>
+               </div>
+
+               <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" role="switch" id="edit_board_can_edit" name="can_edit">
+                  <label class="form-check-label" for="edit_board_can_edit">
+                     <strong><?php echo __('Pode editar cards e sprints', 'scrumban'); ?></strong><br>
+                     <span class="text-muted small"><?php echo __('Permite criar, mover e atualizar cards e sprints do quadro.', 'scrumban'); ?></span>
+                  </label>
+               </div>
+
+               <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="edit_board_can_manage" name="can_manage">
+                  <label class="form-check-label" for="edit_board_can_manage">
+                     <strong><?php echo __('Pode gerenciar configurações do quadro', 'scrumban'); ?></strong><br>
+                     <span class="text-muted small"><?php echo __('Inclui acesso para modificar colunas, membros e integrações do quadro.', 'scrumban'); ?></span>
+                  </label>
+               </div>
+            </div>
+            <div class="modal-footer">
+               <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php echo __('Cancelar', 'scrumban'); ?></button>
+               <button type="submit" class="btn btn-primary"><?php echo __('Salvar permissões', 'scrumban'); ?></button>
+            </div>
+         </form>
+      </div>
+   </div>
+</div>
+
 <!-- Modal for adding member -->
 <div class="modal fade" id="addMemberModal" tabindex="-1">
    <div class="modal-dialog">
