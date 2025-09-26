@@ -4,6 +4,8 @@
  */
 
 let currentTeamId = null;
+let currentBoards = [];
+let editingBoardId = null;
 
 /**
  * Initialize teams functionality
@@ -75,11 +77,26 @@ function initializeBoardManagement() {
     if (addBoardForm) {
         addBoardForm.addEventListener('submit', handleAddBoard);
     }
-    
+
     // Add board button
     const addBoardBtn = document.getElementById('addBoardBtn');
     if (addBoardBtn) {
         addBoardBtn.addEventListener('click', openAddBoardModal);
+    }
+
+    const boardPermissionsForm = document.getElementById('boardPermissionsForm');
+    if (boardPermissionsForm) {
+        boardPermissionsForm.addEventListener('submit', handleBoardPermissionsSubmit);
+    }
+
+    const cancelBoardPermissionsBtn = document.getElementById('cancelBoardPermissions');
+    if (cancelBoardPermissionsBtn) {
+        cancelBoardPermissionsBtn.addEventListener('click', () => hideBoardPermissionsForm());
+    }
+
+    const closeBoardPermissionsBtn = document.getElementById('closeBoardPermissions');
+    if (closeBoardPermissionsBtn) {
+        closeBoardPermissionsBtn.addEventListener('click', () => hideBoardPermissionsForm());
     }
 }
 
@@ -209,9 +226,10 @@ function handleDeleteTeam() {
  */
 function loadTeamManagement(teamId) {
     currentTeamId = teamId;
-    
+    hideBoardPermissionsForm();
+
     showLoading('Loading team details...');
-    
+
     fetch(getPluginUrl() + '/ajax/team.php?action=get_team_details&team_id=' + teamId)
     .then(response => response.json())
     .then(data => {
@@ -237,26 +255,28 @@ function loadTeamManagement(teamId) {
  * Populate team management modal with data
  */
 function populateTeamManagement(data) {
-    const team = data.team;
-    const members = data.members;
-    const boards = data.boards;
-    
+    const payload = data && data.data ? data.data : data || {};
+    const team = payload.team || {};
+    const members = payload.members || [];
+    const boards = payload.boards || [];
+
     // Populate team info
-    document.getElementById('edit_team_id').value = team.id;
+    document.getElementById('edit_team_id').value = team.id || '';
     document.getElementById('edit_team_name').value = team.name || '';
     document.getElementById('edit_team_description').value = team.description || '';
-    
+
     // Set manager dropdown
     const managerSelect = document.querySelector('#editTeamForm select[name="manager_id"]');
     if (managerSelect && team.manager_id) {
         managerSelect.value = team.manager_id;
     }
-    
+
     // Populate members list
     populateMembersList(members);
-    
+
     // Populate boards list
-    populateBoardsList(boards);
+    currentBoards = normalizeBoardList(boards);
+    populateBoardsList(currentBoards);
 }
 
 /**
@@ -319,17 +339,25 @@ function populateMembersList(members) {
  */
 function populateBoardsList(boards) {
     const container = document.getElementById('team-boards-list');
-    
-    if (!boards || boards.length === 0) {
-        container.innerHTML = '<div class="alert alert-info">No boards associated with this team yet.</div>';
+
+    if (!container) {
         return;
     }
-    
+
+    const list = Array.isArray(boards) ? boards : [];
+
+    if (!list.length) {
+        container.innerHTML = '<div class="alert alert-info">No boards associated with this team yet.</div>';
+        hideBoardPermissionsForm();
+        return;
+    }
+
     let html = '<div class="row">';
-    
-    boards.forEach(board => {
+
+    list.forEach(board => {
+        const isEditing = editingBoardId !== null && Number(editingBoardId) === Number(board.id);
         html += '<div class="col-md-6 col-lg-4 mb-3">';
-        html += '<div class="board-card">';
+        html += `<div class="board-card${isEditing ? ' board-card-active' : ''}">`;
         html += '<div class="board-card-header">';
         html += `<h5>${escapeHtml(board.name)}</h5>`;
         html += '<div class="board-actions">';
@@ -367,9 +395,19 @@ function populateBoardsList(boards) {
         
         html += '</div></div>';
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
+
+    if (editingBoardId !== null) {
+        const activeBoard = getBoardById(editingBoardId);
+        if (activeBoard) {
+            fillBoardPermissionsForm(activeBoard, true);
+            showBoardPermissionsEditor();
+        } else {
+            hideBoardPermissionsForm();
+        }
+    }
 }
 
 /**
@@ -601,12 +639,12 @@ function removeBoardFromTeam(teamId, boardId) {
     if (!confirm('Are you sure you want to remove this board from the team?')) {
         return;
     }
-    
+
     const formData = new FormData();
     formData.append('action', 'remove_board');
     formData.append('team_id', teamId);
     formData.append('board_id', boardId);
-    
+
     fetch(getPluginUrl() + '/ajax/team.php', {
         method: 'POST',
         body: formData
@@ -627,10 +665,217 @@ function removeBoardFromTeam(teamId, boardId) {
 }
 
 /**
- * Edit board permissions (placeholder)
+ * Handle board permissions form submission
+ */
+function handleBoardPermissionsSubmit(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const teamInput = form.querySelector('#board_permissions_team_id');
+    const boardInput = form.querySelector('#board_permissions_board_id');
+    const editCheckbox = form.querySelector('#board_can_edit');
+    const manageCheckbox = form.querySelector('#board_can_manage');
+
+    const teamId = teamInput ? teamInput.value : '';
+    const boardId = boardInput ? boardInput.value : '';
+
+    if (!teamId || !boardId) {
+        setBoardPermissionsFeedback('Please select a board to edit permissions.', 'error');
+        return;
+    }
+
+    const formData = new FormData(form);
+    formData.append('action', 'update_board_permissions');
+    formData.set('team_id', teamId);
+    formData.set('board_id', boardId);
+    formData.set('can_edit', editCheckbox && editCheckbox.checked ? '1' : '0');
+    formData.set('can_manage', manageCheckbox && manageCheckbox.checked ? '1' : '0');
+
+    setBoardPermissionsFeedback('', 'info');
+    showLoading('Updating board permissions...');
+
+    fetch(getPluginUrl() + '/ajax/team.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+
+        if (data.success) {
+            const board = getBoardById(boardId);
+            if (board) {
+                board.can_edit = !!(editCheckbox && editCheckbox.checked);
+                board.can_manage = !!(manageCheckbox && manageCheckbox.checked);
+                fillBoardPermissionsForm(board, true);
+            }
+
+            populateBoardsList(currentBoards);
+            const message = data.message || 'Board permissions updated successfully!';
+            setBoardPermissionsFeedback(message, 'success');
+            showNotification(message, 'success');
+        } else {
+            const errorMessage = data.message || 'Failed to update board permissions.';
+            setBoardPermissionsFeedback(errorMessage, 'error');
+            showNotification(errorMessage, 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error:', error);
+        setBoardPermissionsFeedback('Network error occurred.', 'error');
+        showNotification('Network error occurred', 'error');
+    });
+}
+
+/**
+ * Open board permissions editor for selected board
  */
 function editBoardPermissions(teamId, boardId) {
-    showNotification('Board permissions editor - coming soon!', 'info');
+    if (!teamId || !boardId) {
+        return;
+    }
+
+    const board = getBoardById(boardId);
+
+    if (!board) {
+        hideBoardPermissionsForm();
+        showNotification('Unable to find board permissions. Reloading team data...', 'error');
+        loadTeamManagement(teamId);
+        return;
+    }
+
+    editingBoardId = board.id;
+    fillBoardPermissionsForm(board);
+    showBoardPermissionsEditor();
+}
+
+function fillBoardPermissionsForm(board, preserveFeedback = false) {
+    if (!board) {
+        return;
+    }
+
+    const teamInput = document.getElementById('board_permissions_team_id');
+    if (teamInput) {
+        teamInput.value = currentTeamId || '';
+    }
+
+    const boardInput = document.getElementById('board_permissions_board_id');
+    if (boardInput) {
+        boardInput.value = board.id;
+    }
+
+    const boardName = document.getElementById('board-permissions-board-name');
+    if (boardName) {
+        boardName.textContent = board.name || '';
+    }
+
+    const editCheckbox = document.getElementById('board_can_edit');
+    if (editCheckbox) {
+        editCheckbox.checked = !!board.can_edit;
+    }
+
+    const manageCheckbox = document.getElementById('board_can_manage');
+    if (manageCheckbox) {
+        manageCheckbox.checked = !!board.can_manage;
+    }
+
+    if (!preserveFeedback) {
+        setBoardPermissionsFeedback('', 'info');
+    }
+}
+
+function showBoardPermissionsEditor() {
+    const editor = document.getElementById('board-permissions-editor');
+    if (editor) {
+        editor.classList.remove('d-none');
+    }
+}
+
+function hideBoardPermissionsForm() {
+    editingBoardId = null;
+
+    const editor = document.getElementById('board-permissions-editor');
+    if (editor) {
+        editor.classList.add('d-none');
+    }
+
+    const form = document.getElementById('boardPermissionsForm');
+    if (form) {
+        form.reset();
+    }
+
+    const boardName = document.getElementById('board-permissions-board-name');
+    if (boardName) {
+        boardName.textContent = '';
+    }
+
+    setBoardPermissionsFeedback('', 'info');
+}
+
+function setBoardPermissionsFeedback(message, type = 'info') {
+    const feedback = document.getElementById('board-permissions-feedback');
+    if (!feedback) {
+        return;
+    }
+
+    if (!message) {
+        feedback.className = 'alert d-none';
+        feedback.textContent = '';
+        return;
+    }
+
+    const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : 'alert-info';
+    feedback.className = `alert ${alertClass} mb-3`;
+    feedback.textContent = message;
+}
+
+function getBoardById(boardId) {
+    if (!currentBoards || !currentBoards.length) {
+        return null;
+    }
+
+    const numericId = Number(boardId);
+    return currentBoards.find(board => Number(board.id) === numericId) ||
+        currentBoards.find(board => board.id === boardId) || null;
+}
+
+function normalizeBoardList(boards) {
+    if (!Array.isArray(boards)) {
+        return [];
+    }
+
+    return boards.map(normalizeBoard);
+}
+
+function normalizeBoard(board) {
+    if (!board) {
+        return board;
+    }
+
+    const normalized = { ...board };
+    const numericId = Number(board.id);
+    normalized.id = Number.isNaN(numericId) ? board.id : numericId;
+    normalized.can_edit = toBoolean(board.can_edit);
+    normalized.can_manage = toBoolean(board.can_manage);
+    return normalized;
+}
+
+function toBoolean(value) {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    if (typeof value === 'number') {
+        return value === 1;
+    }
+
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        return normalized === '1' || normalized === 'true' || normalized === 'yes';
+    }
+
+    return Boolean(value);
 }
 
 /**
