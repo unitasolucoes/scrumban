@@ -129,6 +129,18 @@ class PluginScrumbanBoard extends CommonDBTM {
 
       // Get user's accessible boards through teams
       $user_teams = PluginScrumbanTeam::getTeamsForUser($_SESSION['glpiID']);
+      $selected_team_id = isset($_GET['team_id']) ? (int)$_GET['team_id'] : null;
+      if ($selected_team_id) {
+         $allowed_team_ids = array_map('intval', array_column($user_teams, 'id'));
+         if (!in_array($selected_team_id, $allowed_team_ids, true)) {
+            $selected_team_id = null;
+         }
+      }
+      $available_boards = PluginScrumbanTeam::getBoardsForUser($_SESSION['glpiID'], $selected_team_id);
+
+      if (empty($available_boards)) {
+         $available_boards = PluginScrumbanTeam::getBoardsForUser($_SESSION['glpiID']);
+      }
       
       if (empty($user_teams)) {
          // User not in any team - only show public boards
@@ -330,6 +342,20 @@ class PluginScrumbanBoard extends CommonDBTM {
          return;
       }
 
+      $selected_team_id = isset($_GET['team_id']) ? (int)$_GET['team_id'] : null;
+      if ($selected_team_id) {
+         $allowed_team_ids = array_map('intval', array_column($user_teams, 'id'));
+         if (!in_array($selected_team_id, $allowed_team_ids, true)) {
+            $selected_team_id = null;
+         }
+      }
+
+      $available_boards = PluginScrumbanTeam::getBoardsForUser($_SESSION['glpiID'], $selected_team_id);
+
+      if (empty($available_boards)) {
+         $available_boards = PluginScrumbanTeam::getBoardsForUser($_SESSION['glpiID']);
+      }
+
       $kanban_data = $this->getKanbanData();
       
       if (isset($kanban_data['error'])) {
@@ -349,13 +375,35 @@ class PluginScrumbanBoard extends CommonDBTM {
       echo "<h1><i class='fas fa-project-diagram me-3'></i>" . $this->fields['name'] . "</h1>";
       echo "<p class='mb-0 opacity-75'>" . $this->fields['description'] . "</p>";
       echo "</div>";
-      echo "<div class='d-flex gap-2'>";
-      
-      // Team selector
-      if (!empty($user_teams) && count($user_teams) > 1) {
-         echo plugin_scrumban_get_team_selector();
+      echo "<div class='d-flex gap-2 flex-wrap justify-content-end align-items-center'>";
+
+      $board_selector = plugin_scrumban_render_board_selector($this->getID(), [
+         'boards' => $available_boards,
+         'team_id' => $selected_team_id,
+         'team_selector_id' => 'scrumban-team-selector',
+         'always_show' => true,
+         'label' => __('Quadro', 'scrumban'),
+         'label_class' => 'form-label text-white-50 mb-1 small',
+         'wrapper_class' => 'scrumban-selector text-start d-flex flex-column'
+      ]);
+
+      if (!empty($board_selector)) {
+         echo $board_selector;
       }
-      
+
+      $team_selector = plugin_scrumban_render_team_selector($selected_team_id, [
+         'teams' => $user_teams,
+         'board_selector_id' => 'scrumban-board-selector',
+         'label' => __('Equipe', 'scrumban'),
+         'placeholder' => __('Todas as equipes', 'scrumban'),
+         'label_class' => 'form-label text-white-50 mb-1 small',
+         'wrapper_class' => 'scrumban-selector text-start d-flex flex-column'
+      ]);
+
+      if (!empty($team_selector)) {
+         echo $team_selector;
+      }
+
       echo "<button class='btn btn-light btn-sm'><i class='fas fa-cog'></i> " . __('Settings', 'scrumban') . "</button>";
       echo "<button class='btn btn-outline-light btn-sm'><i class='fas fa-user'></i> " . $_SESSION['glpiname'] . "</button>";
       echo "</div>";
@@ -364,7 +412,7 @@ class PluginScrumbanBoard extends CommonDBTM {
       echo "</div>";
 
       // Navigation tabs
-      $this->showNavigationTabs('kanban');
+      $this->showNavigationTabs('kanban', ['team_id' => $selected_team_id]);
 
       // Kanban container
       echo "<div class='kanban-container fade-in'>";
@@ -492,11 +540,29 @@ class PluginScrumbanBoard extends CommonDBTM {
    /**
     * Show navigation tabs
     */
-   function showNavigationTabs($active_tab = 'kanban') {
+   function showNavigationTabs($active_tab = 'kanban', array $extra_params = []) {
       echo "<nav class='agilepm-nav'>";
       echo "<div class='container-fluid'>";
       echo "<ul class='nav nav-tabs' role='tablist'>";
-      
+
+      $params = $extra_params;
+
+      if (!isset($params['board_id']) && $this->getID()) {
+         $params['board_id'] = $this->getID();
+      }
+
+      if (!isset($params['team_id']) && isset($_GET['team_id']) && $_GET['team_id'] !== '') {
+         $params['team_id'] = (int)$_GET['team_id'];
+      }
+
+      foreach ($params as $key => $value) {
+         if ($value === null || $value === '') {
+            unset($params[$key]);
+         }
+      }
+
+      $query_string = http_build_query($params);
+
       $tabs = [
          'kanban' => ['Kanban Board', 'fas fa-columns', 'board.php'],
          'sprints' => ['Sprints', 'fas fa-sync-alt', 'sprint.php'],
@@ -507,7 +573,10 @@ class PluginScrumbanBoard extends CommonDBTM {
       foreach ($tabs as $key => $tab) {
          $active_class = ($active_tab == $key) ? 'active' : '';
          $url = Plugin::getWebDir('scrumban') . '/front/' . $tab[2];
-         
+         if (!empty($query_string)) {
+            $url .= '?' . $query_string;
+         }
+
          echo "<li class='nav-item'>";
          echo "<a class='nav-link $active_class' href='$url'>";
          echo "<i class='" . $tab[1] . " me-2'></i>" . $tab[0];

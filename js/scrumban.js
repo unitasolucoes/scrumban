@@ -5,6 +5,66 @@
 
 let currentBoardId = 1;
 
+document.addEventListener('DOMContentLoaded', () => {
+    initializeBoardSelectors();
+});
+
+function initializeBoardSelectors() {
+    const boardSelectors = document.querySelectorAll('[data-scrumban-board-selector]');
+    boardSelectors.forEach((selector) => {
+        selector.addEventListener('change', handleBoardSelectorChange);
+    });
+
+    const teamSelectors = document.querySelectorAll('[data-scrumban-team-selector]');
+    teamSelectors.forEach((selector) => {
+        selector.addEventListener('change', () => handleTeamSelectorChange(selector));
+    });
+}
+
+function handleBoardSelectorChange(event) {
+    const selector = event.target;
+    const boardId = selector.value;
+
+    if (!boardId) {
+        return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('board_id', boardId);
+
+    const teamField = selector.dataset.teamField;
+    if (teamField) {
+        const teamSelector = document.getElementById(teamField);
+        if (teamSelector && teamSelector.value) {
+            url.searchParams.set('team_id', teamSelector.value);
+        } else {
+            url.searchParams.delete('team_id');
+        }
+    }
+
+    window.location.href = url.toString();
+}
+
+function handleTeamSelectorChange(selector) {
+    const url = new URL(window.location.href);
+
+    if (selector.value) {
+        url.searchParams.set('team_id', selector.value);
+    } else {
+        url.searchParams.delete('team_id');
+    }
+
+    const boardField = selector.dataset.boardField;
+    if (boardField) {
+        const boardSelector = document.getElementById(boardField);
+        if (boardSelector && boardSelector.value) {
+            url.searchParams.set('board_id', boardSelector.value);
+        }
+    }
+
+    window.location.href = url.toString();
+}
+
 /**
  * Inicializar funcionalidades do Scrumban
  */
