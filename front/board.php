@@ -1,216 +1,135 @@
 <?php
-
 include ('../../../inc/includes.php');
 
-Html::header(__('Scrumban - Quadro Kanban', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "quadro");
+Session::checkLoginUser();
+Session::haveRight(PluginScrumbanProfile::RIGHT_VIEW, READ);
 
-// Verificar se existe pelo menos um quadro
-$team_id = isset($_GET['team_id']) ? (int)$_GET['team_id'] : null;
-$user_teams = PluginScrumbanTeam::getTeamsForUser($_SESSION['glpiID']);
+$board_id = (int)($_GET['boards_id'] ?? 0);
+$team_id = (int)($_GET['team_id'] ?? 0);
+$assignee_filter = $_GET['assignee'] ?? '';
+$type_filter = $_GET['type'] ?? '';
+$priority_filter = $_GET['priority'] ?? '';
 
-if ($team_id) {
-   $allowed_team_ids = array_map('intval', array_column($user_teams, 'id'));
-   if (!in_array($team_id, $allowed_team_ids, true)) {
-      $team_id = null;
+$available_teams = PluginScrumbanTeam::getTeamsForUser(Session::getLoginUserID(false));
+
+if (!$board_id && !empty($available_teams)) {
+   $default_boards = PluginScrumbanBoard::getBoardsForUser(Session::getLoginUserID(false), $team_id ?: null);
+   if (!empty($default_boards)) {
+      $board_id = $default_boards[0]['id'];
    }
 }
 
-$boards = PluginScrumbanTeam::getBoardsForUser($_SESSION['glpiID'], $team_id);
-if (empty($boards)) {
-   echo "<div class='center'>";
-   if ($team_id) {
-      echo "<h3>" . __('Nenhum quadro disponível para esta equipe', 'scrumban') . "</h3>";
-      echo "<p>" . __('Associe um quadro à equipe selecionada ou escolha outra equipe para continuar.', 'scrumban') . "</p>";
-   } else {
-      echo "<h3>" . __('Nenhum quadro encontrado', 'scrumban') . "</h3>";
-      echo "<p>" . __('Você precisa criar um quadro antes de usar o sistema Scrumban.', 'scrumban') . "</p>";
+$board = $board_id ? PluginScrumbanBoard::getBoardWithAccessCheck($board_id) : null;
+$team_members = [];
+if ($board && !empty($board->fields['teams_id'])) {
+   $team_members = PluginScrumbanTeam::getMembersData($board->fields['teams_id']);
+}
+
+Html::header(__('Quadros Kanban', 'scrumban'), '', 'tools', 'pluginScrumbanMenu', 'board');
+
+echo "<div class='scrumban-board-page container-fluid'>";
+
+echo "<div class='scrumban-board-toolbar d-flex flex-wrap gap-3 align-items-center justify-content-between mb-4'>";
+
+echo "<div>";
+if ($board) {
+   echo "<h2 class='mb-0'>" . htmlspecialchars($board->fields['name']) . "</h2>";
+   echo "<p class='text-muted mb-0'>" . htmlspecialchars($board->fields['description']) . "</p>";
+} else {
+   echo "<h2 class='mb-0'>" . __('Selecione um quadro', 'scrumban') . "</h2>";
+}
+echo "</div>";
+
+echo "<div class='d-flex gap-3 flex-wrap'>";
+
+echo "<div class='scrumban-selector'>";
+echo "<label class='form-label'>" . __('Equipe', 'scrumban') . "</label>";
+echo "<select class='form-select' id='scrumban-team-select'>";
+echo "<option value=''>" . __('Todas as equipes', 'scrumban') . "</option>";
+foreach ($available_teams as $team) {
+   $selected = $team_id == $team['id'] ? 'selected' : '';
+   echo "<option value='" . $team['id'] . "' $selected>" . htmlspecialchars($team['name']) . "</option>";
+}
+echo "</select>";
+echo "</div>";
+
+$boards = PluginScrumbanBoard::getBoardsForUser(Session::getLoginUserID(false), $team_id ?: null);
+$board_options = [];
+foreach ($boards as $item) {
+   $board_options[$item['id']] = $item['name'];
+}
+echo "<div class='scrumban-selector'>";
+echo "<label class='form-label'>" . __('Quadro', 'scrumban') . "</label>";
+echo "<select class='form-select' id='scrumban-board-select'>";
+foreach ($board_options as $value => $label) {
+   $selected = $board_id == $value ? 'selected' : '';
+   echo "<option value='" . $value . "' $selected>" . htmlspecialchars($label) . "</option>";
+}
+echo "</select>";
+echo "</div>";
+
+$filters_disabled = $board ? '' : 'disabled';
+
+echo "<div class='scrumban-selector'>";
+echo "<label class='form-label'>" . __('Responsável', 'scrumban') . "</label>";
+echo "<select class='form-select' id='scrumban-filter-assignee' $filters_disabled>";
+echo "<option value=''>" . __('Todos os responsáveis', 'scrumban') . "</option>";
+foreach ($team_members as $member) {
+   $value = (int)$member['users_id'];
+   $selected = ((string)$assignee_filter === (string)$value) ? 'selected' : '';
+   echo "<option value='" . $value . "' $selected>" . htmlspecialchars($member['name']) . "</option>";
+}
+echo "</select>";
+echo "</div>";
+
+echo "<div class='scrumban-selector'>";
+echo "<label class='form-label'>" . __('Tipo de Issue', 'scrumban') . "</label>";
+echo "<select class='form-select' id='scrumban-filter-type' $filters_disabled>";
+echo "<option value=''>" . __('Todos os tipos', 'scrumban') . "</option>";
+foreach (PluginScrumbanUtils::TYPES as $key => $label) {
+   $selected = ((string)$type_filter === (string)$key) ? 'selected' : '';
+   echo "<option value='" . htmlspecialchars($key) . "' $selected>" . __($label, 'scrumban') . "</option>";
+}
+echo "</select>";
+echo "</div>";
+
+echo "<div class='scrumban-selector'>";
+echo "<label class='form-label'>" . __('Prioridade', 'scrumban') . "</label>";
+echo "<select class='form-select' id='scrumban-filter-priority' $filters_disabled>";
+echo "<option value=''>" . __('Todas as prioridades', 'scrumban') . "</option>";
+foreach (PluginScrumbanUtils::PRIORITIES as $key => $label) {
+   $selected = ((string)$priority_filter === (string)$key) ? 'selected' : '';
+   echo "<option value='" . htmlspecialchars($key) . "' $selected>" . __($label, 'scrumban') . "</option>";
+}
+echo "</select>";
+echo "</div>";
+
+if (Session::haveRight(PluginScrumbanProfile::RIGHT_EDIT, CREATE)) {
+   echo "<button class='btn btn-primary' id='scrumban-add-card'><i class='ti ti-plus'></i> " . __('Novo card', 'scrumban') . "</button>";
+}
+
+echo "</div>";
+echo "</div>";
+
+if (!$board) {
+   echo "<div class='alert alert-info'>" . __('Você ainda não possui acesso a nenhum quadro. Solicite acesso a uma equipe ou crie um novo quadro.', 'scrumban') . "</div>";
+} else {
+   echo "<div id='scrumban-kanban' data-board='" . $board->getID() . "'>";
+   foreach (PluginScrumbanUtils::STATUSES as $status_key => $status_label) {
+      echo "<div class='scrumban-column' data-status='" . $status_key . "'>";
+      echo "<div class='scrumban-column__header'>";
+      echo "<span class='scrumban-column__title'>" . __($status_label, 'scrumban') . "</span>";
+      echo "<span class='badge bg-secondary' data-count='0'>0</span>";
+      echo "</div>";
+      echo "<div class='scrumban-column__body' data-status-list='" . $status_key . "'></div>";
+      echo "</div>";
    }
-   echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/scrumban/front/board.form.php' class='btn btn-primary'>";
-   echo "<i class='fas fa-plus me-2'></i>Criar Primeiro Quadro";
-   echo "</a>";
    echo "</div>";
-   Html::footer();
-   exit;
 }
 
-// Pegar ID do quadro (padrão: primeiro disponível)
-$board_id = isset($_GET['board_id']) ? (int)$_GET['board_id'] : (int)$boards[0]['id'];
-$board_ids = array_map('intval', array_column($boards, 'id'));
+echo "</div>";
 
-if (!in_array($board_id, $board_ids, true)) {
-   $board_id = (int)$boards[0]['id'];
-}
+include __DIR__ . '/card.form.php';
+include __DIR__ . '/templates/card_modal_static.php';
 
-// Carregar o quadro
-$board = new PluginScrumbanBoard();
-if (!$board->getFromDB($board_id)) {
-   echo "<div class='alert alert-danger'>Quadro não encontrado!</div>";
-   Html::footer();
-   exit;
-}
-
-// Incluir CSS e JS específicos
-echo "<link rel='stylesheet' type='text/css' href='" . Plugin::getWebDir('scrumban') . "/css/scrumban.css'>";
-echo "<script src='https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js'></script>";
-echo "<script src='" . Plugin::getWebDir('scrumban') . "/js/scrumban.js'></script>";
-
-// Renderizar o quadro Kanban
-$board->showKanbanBoard();
-
-// Modal para criar nova issue
-?>
-<div class="modal fade" id="createIssueModal" tabindex="-1">
-   <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-         <div class="modal-header">
-            <h5 class="modal-title">
-               <i class="fas fa-plus me-2"></i><?php echo __('Criar Nova Issue', 'scrumban'); ?>
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-         </div>
-         <form id="createIssueForm" action="<?php echo Plugin::getWebDir('scrumban'); ?>/ajax/card.php" method="post">
-            <div class="modal-body">
-               <input type="hidden" name="boards_id" value="<?php echo $board_id; ?>">
-               <input type="hidden" name="action" value="create">
-               
-               <div class="row">
-                  <div class="col-md-8">
-                     <div class="form-group">
-                        <label class="form-label"><?php echo __('Título', 'scrumban'); ?> *</label>
-                        <input type="text" class="form-control" name="title" required>
-                     </div>
-                  </div>
-                  <div class="col-md-4">
-                     <div class="form-group">
-                        <label class="form-label"><?php echo __('Tipo', 'scrumban'); ?> *</label>
-                        <select class="form-select" name="type" required>
-                           <option value="story"><?php echo __('História', 'scrumban'); ?></option>
-                           <option value="task"><?php echo __('Tarefa', 'scrumban'); ?></option>
-                           <option value="bug"><?php echo __('Bug', 'scrumban'); ?></option>
-                           <option value="epic"><?php echo __('Épico', 'scrumban'); ?></option>
-                        </select>
-                     </div>
-                  </div>
-               </div>
-
-               <div class="row">
-                  <div class="col-md-6">
-                     <div class="form-group">
-                        <label class="form-label"><?php echo __('Prioridade', 'scrumban'); ?></label>
-                        <select class="form-select" name="priority">
-                           <option value="normal" selected><?php echo __('Normal', 'scrumban'); ?></option>
-                           <option value="critico"><?php echo __('Crítico', 'scrumban'); ?></option>
-                           <option value="maior"><?php echo __('Maior', 'scrumban'); ?></option>
-                           <option value="menor"><?php echo __('Menor', 'scrumban'); ?></option>
-                           <option value="trivial"><?php echo __('Trivial', 'scrumban'); ?></option>
-                        </select>
-                     </div>
-                  </div>
-                  <div class="col-md-6">
-                     <div class="form-group">
-                        <label class="form-label"><?php echo __('Story Points', 'scrumban'); ?></label>
-                        <select class="form-select" name="story_points">
-                           <option value="0"><?php echo __('Não estimado', 'scrumban'); ?></option>
-                           <option value="1">1</option>
-                           <option value="2">2</option>
-                           <option value="3">3</option>
-                           <option value="5">5</option>
-                           <option value="8">8</option>
-                           <option value="13">13</option>
-                           <option value="21">21</option>
-                        </select>
-                     </div>
-                  </div>
-               </div>
-
-               <div class="form-group">
-                  <label class="form-label"><?php echo __('Descrição', 'scrumban'); ?></label>
-                  <textarea class="form-control" name="description" rows="4" placeholder="<?php echo __('Descreva a issue...', 'scrumban'); ?>"></textarea>
-               </div>
-
-               <div class="row">
-                  <div class="col-md-6">
-                     <div class="form-group">
-                        <label class="form-label"><?php echo __('Responsável', 'scrumban'); ?></label>
-                        <input type="text" class="form-control" name="assignee" placeholder="Nome do responsável">
-                     </div>
-                  </div>
-                  <div class="col-md-6">
-                     <div class="form-group">
-                        <label class="form-label"><?php echo __('Reporter', 'scrumban'); ?></label>
-                        <input type="text" class="form-control" name="reporter" value="<?php echo $_SESSION['glpiname']; ?>">
-                     </div>
-                  </div>
-               </div>
-
-               <?php
-               // Buscar sprints disponíveis
-               $sprints = PluginScrumbanSprint::getActiveSprints($board_id);
-               if (!empty($sprints)) {
-                  echo "<div class='row'>";
-                  echo "<div class='col-md-6'>";
-                  echo "<div class='form-group'>";
-                  echo "<label class='form-label'>" . __('Sprint', 'scrumban') . "</label>";
-                  echo "<select class='form-select' name='sprints_id'>";
-                  echo "<option value='0'>" . __('Backlog', 'scrumban') . "</option>";
-                  foreach ($sprints as $sprint) {
-                     echo "<option value='" . $sprint['id'] . "'>" . htmlspecialchars($sprint['name']) . "</option>";
-                  }
-                  echo "</select>";
-                  echo "</div>";
-                  echo "</div>";
-                  echo "<div class='col-md-6'>";
-                  echo "<div class='form-group'>";
-                  echo "<label class='form-label'>" . __('Data Limite', 'scrumban') . "</label>";
-                  echo "<input type='date' class='form-control' name='due_date'>";
-                  echo "</div>";
-                  echo "</div>";
-                  echo "</div>";
-               }
-               ?>
-
-               <div class="form-group">
-                  <label class="form-label"><?php echo __('Labels', 'scrumban'); ?></label>
-                  <input type="text" class="form-control" name="labels" placeholder="<?php echo __('Separar por vírgula (ex: ui, api, database)', 'scrumban'); ?>">
-               </div>
-            </div>
-            <div class="modal-footer">
-               <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php echo __('Cancelar', 'scrumban'); ?></button>
-               <button type="submit" class="btn btn-primary"><?php echo __('Criar Issue', 'scrumban'); ?></button>
-            </div>
-         </form>
-      </div>
-   </div>
-</div>
-
-<!-- Modal para detalhes do card -->
-<div class="modal fade" id="cardDetailsModal" tabindex="-1">
-   <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-         <div class="modal-header">
-            <h5 class="modal-title">
-               <i class="fas fa-eye me-2"></i><?php echo __('Detalhes da Issue', 'scrumban'); ?>
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-         </div>
-         <div class="modal-body" id="cardDetailsContent">
-            <!-- Conteúdo carregado dinamicamente -->
-         </div>
-         <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><?php echo __('Fechar', 'scrumban'); ?></button>
-            <button type="button" class="btn btn-primary" onclick="editCurrentCard()"><?php echo __('Editar Issue', 'scrumban'); ?></button>
-         </div>
-      </div>
-   </div>
-</div>
-
-<script>
-// Inicializar funcionalidades JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-   initializeScrumban(<?php echo $board_id; ?>);
-});
-</script>
-
-<?php
 Html::footer();
-?>

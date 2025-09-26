@@ -1,26 +1,25 @@
 <?php
+include_once ('../../../inc/includes.php');
 
-include ('../../../inc/includes.php');
-
-Html::header(__('Scrumban - Card', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "quadro");
+Session::checkLoginUser();
+Session::haveRight(PluginScrumbanProfile::RIGHT_EDIT, READ);
 
 $card = new PluginScrumbanCard();
 
-if (isset($_POST["add"])) {
-   $newID = $card->add($_POST);
-   if ($newID) {
-      Html::redirect(Plugin::getWebDir('scrumban') . "/front/board.php");
-   }
-} else if (isset($_POST["update"])) {
-   $card->update($_POST);
+if (isset($_POST['add'])) {
+   $card->check(-1, CREATE, $_POST);
+   $card->add($_POST);
    Html::back();
-} else if (isset($_POST["delete"])) {
-   $card->delete($_POST);
-   Html::redirect(Plugin::getWebDir('scrumban') . "/front/board.php");
 }
 
-$ID = $_GET["id"] ?? 0;
-$card->showForm($ID);
+if (isset($_POST['update'])) {
+   $card->check($_POST['id'], UPDATE);
+   $card->update($_POST);
+   Html::back();
+}
 
-Html::footer();
-?>
+if (isset($_POST['purge'])) {
+   $card->check($_POST['id'], DELETE);
+   $card->delete($_POST);
+   Html::back();
+}

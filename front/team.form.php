@@ -1,34 +1,34 @@
 <?php
-
 include ('../../../inc/includes.php');
 
-Html::header(__('Scrumban - Team', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "teams");
+Session::checkLoginUser();
+Session::haveRight(PluginScrumbanProfile::RIGHT_TEAM, READ);
 
 $team = new PluginScrumbanTeam();
 
-if (isset($_POST["add"])) {
-   $team->check(-1, CREATE);
-   $newID = $team->add($_POST);
-   Html::redirect(Plugin::getWebDir('scrumban') . "/front/team.php?id=$newID");
-} else if (isset($_POST["update"])) {
+if (isset($_POST['add'])) {
+   Session::checkRight(PluginScrumbanProfile::RIGHT_TEAM, CREATE);
+   $team->check(-1, CREATE, $_POST);
+   $team->add($_POST);
+   Html::back();
+}
+
+if (isset($_POST['update'])) {
+   Session::checkRight(PluginScrumbanProfile::RIGHT_TEAM, UPDATE);
    $team->check($_POST['id'], UPDATE);
    $team->update($_POST);
    Html::back();
-} else if (isset($_POST["delete"])) {
+}
+
+if (isset($_POST['purge'])) {
+   Session::checkRight(PluginScrumbanProfile::RIGHT_TEAM, DELETE);
    $team->check($_POST['id'], DELETE);
    $team->delete($_POST);
-   Html::redirect(Plugin::getWebDir('scrumban') . "/front/team.php");
+   Html::redirect('team.php');
 }
 
-$ID = $_GET["id"] ?? 0;
+Html::header(__('Equipe', 'scrumban'), '', 'tools', 'pluginScrumbanMenu', 'team');
 
-if ($ID > 0) {
-   $team->check($ID, READ);
-} else {
-   $team->check(-1, CREATE);
-}
-
-$team->showForm($ID);
+$team->display($_GET);
 
 Html::footer();
-?>
