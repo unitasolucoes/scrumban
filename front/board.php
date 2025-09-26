@@ -5,11 +5,26 @@ include ('../../../inc/includes.php');
 Html::header(__('Scrumban - Quadro Kanban', 'scrumban'), $_SERVER['PHP_SELF'], "tools", "PluginScrumbanMenu", "quadro");
 
 // Verificar se existe pelo menos um quadro
-$boards = PluginScrumbanBoard::getActiveBoards();
+$team_id = isset($_GET['team_id']) ? (int)$_GET['team_id'] : null;
+$user_teams = PluginScrumbanTeam::getTeamsForUser($_SESSION['glpiID']);
+
+if ($team_id) {
+   $allowed_team_ids = array_map('intval', array_column($user_teams, 'id'));
+   if (!in_array($team_id, $allowed_team_ids, true)) {
+      $team_id = null;
+   }
+}
+
+$boards = PluginScrumbanTeam::getBoardsForUser($_SESSION['glpiID'], $team_id);
 if (empty($boards)) {
    echo "<div class='center'>";
-   echo "<h3>Nenhum quadro encontrado</h3>";
-   echo "<p>Você precisa criar um quadro antes de usar o sistema Scrumban.</p>";
+   if ($team_id) {
+      echo "<h3>" . __('Nenhum quadro disponível para esta equipe', 'scrumban') . "</h3>";
+      echo "<p>" . __('Associe um quadro à equipe selecionada ou escolha outra equipe para continuar.', 'scrumban') . "</p>";
+   } else {
+      echo "<h3>" . __('Nenhum quadro encontrado', 'scrumban') . "</h3>";
+      echo "<p>" . __('Você precisa criar um quadro antes de usar o sistema Scrumban.', 'scrumban') . "</p>";
+   }
    echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/scrumban/front/board.form.php' class='btn btn-primary'>";
    echo "<i class='fas fa-plus me-2'></i>Criar Primeiro Quadro";
    echo "</a>";
@@ -19,7 +34,12 @@ if (empty($boards)) {
 }
 
 // Pegar ID do quadro (padrão: primeiro disponível)
-$board_id = isset($_GET['board_id']) ? intval($_GET['board_id']) : $boards[0]['id'];
+$board_id = isset($_GET['board_id']) ? (int)$_GET['board_id'] : (int)$boards[0]['id'];
+$board_ids = array_map('intval', array_column($boards, 'id'));
+
+if (!in_array($board_id, $board_ids, true)) {
+   $board_id = (int)$boards[0]['id'];
+}
 
 // Carregar o quadro
 $board = new PluginScrumbanBoard();

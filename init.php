@@ -53,3 +53,7 @@ if (!class_exists('PluginScrumbanTeamMember')) {
 if (!class_exists('PluginScrumbanTeamBoard')) {
    require_once(GLPI_ROOT . '/plugins/scrumban/inc/teamboard.class.php');
 }
+
+if (!function_exists('plugin_scrumban_render_board_selector')) {
+   require_once(GLPI_ROOT . '/plugins/scrumban/inc/helpers.php');
+}
