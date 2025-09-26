@@ -63,20 +63,6 @@ function plugin_scrumban_install() {
       $DB->queryOrDie($query, $DB->error());
    }
 
-   // Update boards table to support teams (if not already updated)
-   $boards_fields = $DB->listFields("glpi_plugin_scrumban_boards");
-   
-   if (!isset($boards_fields['teams_id'])) {
-      $query = "ALTER TABLE `glpi_plugin_scrumban_boards` 
-                ADD COLUMN `teams_id` int unsigned NOT NULL default '0' AFTER `entities_id`,
-                ADD COLUMN `visibility` enum('public','team','private') NOT NULL default 'public' AFTER `teams_id`,
-                ADD COLUMN `users_id_created` int unsigned NOT NULL default '0' AFTER `visibility`,
-                ADD KEY `teams_id` (`teams_id`),
-                ADD KEY `visibility` (`visibility`),
-                ADD KEY `users_id_created` (`users_id_created`)";
-      $DB->queryOrDie($query, $DB->error());
-   }
-
    // Create boards table if it doesn't exist
    if (!$DB->tableExists("glpi_plugin_scrumban_boards")) {
       $query = "CREATE TABLE `glpi_plugin_scrumban_boards` (
@@ -97,8 +83,22 @@ function plugin_scrumban_install() {
          KEY `users_id_created` (`users_id_created`),
          KEY `is_active` (`is_active`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;";
-      
+
       $DB->queryOrDie($query, $DB->error());
+   } else {
+      // Update boards table to support teams (if not already updated)
+      $boards_fields = $DB->listFields("glpi_plugin_scrumban_boards");
+
+      if (!isset($boards_fields['teams_id'])) {
+         $query = "ALTER TABLE `glpi_plugin_scrumban_boards`
+                   ADD COLUMN `teams_id` int unsigned NOT NULL default '0' AFTER `entities_id`,
+                   ADD COLUMN `visibility` enum('public','team','private') NOT NULL default 'public' AFTER `teams_id`,
+                   ADD COLUMN `users_id_created` int unsigned NOT NULL default '0' AFTER `visibility`,
+                   ADD KEY `teams_id` (`teams_id`),
+                   ADD KEY `visibility` (`visibility`),
+                   ADD KEY `users_id_created` (`users_id_created`)";
+         $DB->queryOrDie($query, $DB->error());
+      }
    }
 
    // Create columns table
