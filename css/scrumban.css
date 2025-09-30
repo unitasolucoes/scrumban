@@ -1,264 +1,817 @@
-#scrumban-kanban {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  align-items: flex-start;
+/* ==========================================================================
+   Scrumban Plugin CSS - Sistema de Gestão Ágil para GLPI
+   ========================================================================== */
+
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
 }
 
-.scrumban-column {
-  background: #f8f9fa;
-  border-radius: 16px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
-  padding: 1rem;
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+.agilepm-container {
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: white;
+    min-height: 100vh;
 }
 
-.scrumban-column__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 600;
-  color: #495057;
-  text-transform: uppercase;
-  letter-spacing: .08em;
+/* ==========================================================================
+   Header & Navigation
+   ========================================================================== */
+
+.agilepm-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.scrumban-column__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 120px;
+.agilepm-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
 }
 
-.scrumban-kanban-placeholder {
-  border: 2px dashed rgba(99,102,241,0.4);
-  border-radius: 12px;
-  min-height: 80px;
+.agilepm-nav {
+    background-color: white;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0;
 }
 
-.scrumban-kanban-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  transition: transform .2s ease, box-shadow .2s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.nav-tabs .nav-link {
+    color: #495057;
+    border: none;
+    padding: 15px 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-.scrumban-kanban-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+.nav-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
 }
 
-.scrumban-kanban-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    background-color: white;
+    border-bottom: 3px solid #007bff;
+    font-weight: 600;
 }
 
-.scrumban-kanban-card__title {
-  font-weight: 600;
-  color: #1f2937;
-  max-width: 100%;
+/* ==========================================================================
+   Kanban Board
+   ========================================================================== */
+
+.kanban-container {
+    padding: 30px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: calc(100vh - 200px);
 }
 
-.scrumban-kanban-card__meta {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6366f1;
-  font-weight: 700;
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.scrumban-kanban-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+.board-info h2 {
+    margin: 0;
+    color: #343a40;
+    font-size: 1.8rem;
 }
 
-.scrumban-kanban-card__assignee {
-  font-size: 0.85rem;
-  color: #6b7280;
+.board-stats {
+    display: flex;
+    gap: 30px;
 }
 
-.scrumban-kanban-card__labels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
+.stat-item {
+    text-align: center;
 }
 
-.scrumban-kanban-card__footer {
-  display: flex;
-  justify-content: flex-end;
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #007bff;
+    line-height: 1;
 }
 
-.badge.priority-low { background-color: #22d3ee; }
-.badge.priority-normal { background-color: #3b82f6; }
-.badge.priority-high { background-color: #f97316; }
-.badge.priority-critical { background-color: #ef4444; }
-
-.scrumban-page__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  gap: 1rem;
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-top: 5px;
 }
 
-.scrumban-card.card {
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 14px 25px rgba(15,23,42,0.08);
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    min-height: 600px;
+    overflow-x: auto;
+    padding-bottom: 20px;
 }
 
-.scrumban-stat-box {
-  padding: 0.75rem 1rem;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #eef2ff, #e0e7ff);
-  min-width: 140px;
+.kanban-column {
+    flex: 1;
+    min-width: 300px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
 }
 
-.scrumban-stat-box__label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: #6366f1;
-  letter-spacing: .08em;
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #dee2e6;
 }
 
-.scrumban-stat-box__value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #312e81;
+.column-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0;
 }
 
-.scrumban-status-summary {
-  display: grid;
-  gap: 0.5rem;
+.column-count {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
-.scrumban-status-summary__item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 10px;
-  background: rgba(99,102,241,0.08);
+.cards-container {
+    min-height: 500px;
 }
 
-.scrumban-status-summary__label {
-  font-weight: 500;
-  color: #312e81;
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.kanban-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    transition: all 0.3s ease;
+    border-left: 4px solid #dee2e6;
+    position: relative;
+    overflow: hidden;
 }
 
-.scrumban-status-summary__badge {
-  background: #4f46e5;
-  color: #fff;
-  font-weight: 600;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.scrumban-section {
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 18px 30px rgba(15,23,42,0.08);
-  margin-bottom: 1.5rem;
+.kanban-card:active {
+    cursor: grabbing;
 }
 
-.scrumban-section__title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  color: #64748b;
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.scrumban-comments {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-height: 220px;
-  overflow-y: auto;
-  padding-right: .5rem;
+.issue-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
 }
 
-.scrumban-history {
-  max-height: 600px;
-  overflow-y: auto;
-  padding-right: .75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.issue-story {
+    background-color: #e3f2fd;
+    color: #1976d2;
 }
 
-.scrumban-history__item {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  background: rgba(226, 232, 240, 0.5);
-  padding: 0.75rem;
-  border-radius: 12px;
+.issue-task {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
 }
 
-.scrumban-team-members__list {
-  border: 1px solid rgba(99,102,241,0.2);
-  border-radius: 12px;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-height: 220px;
-  overflow-y: auto;
+.issue-bug {
+    background-color: #ffebee;
+    color: #d32f2f;
 }
 
-.scrumban-team-members__item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  border-radius: 10px;
-  background: rgba(99,102,241,0.08);
+.issue-epic {
+    background-color: #e8f5e8;
+    color: #388e3c;
 }
 
-.scrumban-dynamic-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.card-id {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: 600;
 }
 
-.scrumban-dynamic-item {
-  background: rgba(241, 245, 249, 0.8);
-  border-radius: 12px;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 8px;
+    line-height: 1.4;
 }
 
-.scrumban-dynamic-item .scrumban-dynamic-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
+.card-description {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-.scrumban-selector .select2-container,
-.scrumban-selector select {
-  min-width: 220px;
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
 }
+
+.card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.story-points {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.assignee {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.priority-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Priority Colors */
+.priority-trivial .priority-indicator { background-color: #6c757d; }
+.priority-menor .priority-indicator { background-color: #17a2b8; }
+.priority-normal .priority-indicator { background-color: #28a745; }
+.priority-maior .priority-indicator { background-color: #ffc107; }
+.priority-critico .priority-indicator { background-color: #dc3545; }
+
+.priority-trivial { border-left-color: #6c757d; }
+.priority-menor { border-left-color: #17a2b8; }
+.priority-normal { border-left-color: #28a745; }
+.priority-maior { border-left-color: #ffc107; }
+.priority-critico { border-left-color: #dc3545; }
+
+/* ==========================================================================
+   Sprint Management
+   ========================================================================== */
+
+.sprint-container {
+    padding: 30px;
+    background-color: #f8f9fa;
+}
+
+.sprint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sprints-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.sprint-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border-top: 4px solid #007bff;
+}
+
+.sprint-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.sprint-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sprint-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0;
+}
+
+.sprint-status {
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-ativo {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-planejado {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-concluido {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.sprint-dates {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sprint-progress {
+    margin-bottom: 20px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.progress-bar-custom {
+    height: 12px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 6px;
+    transition: width 0.8s ease;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.sprint-metrics {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.metric {
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #007bff;
+    line-height: 1;
+}
+
+.metric-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* ==========================================================================
+   Backlog
+   ========================================================================== */
+
+.backlog-container {
+    padding: 30px;
+    background-color: #f8f9fa;
+}
+
+.backlog-controls {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.backlog-filters {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    min-width: 300px;
+}
+
+.search-box input {
+    padding-right: 40px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.search-box i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.backlog-items {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.backlog-item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.backlog-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.drag-handle {
+    color: #6c757d;
+    margin-right: 15px;
+    cursor: grab;
+    font-size: 1.2rem;
+}
+
+.item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.item-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 5px;
+}
+
+.item-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.item-meta {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.item-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 15px;
+}
+
+/* ==========================================================================
+   Timeline
+   ========================================================================== */
+
+.timeline-container {
+    padding: 30px;
+    background-color: #f8f9fa;
+}
+
+.timeline-header {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-view {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+.timeline-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 0;
+    min-width: 1000px;
+}
+
+.timeline-labels {
+    background-color: #f8f9fa;
+    border-right: 2px solid #dee2e6;
+}
+
+.timeline-content {
+    position: relative;
+}
+
+.timeline-dates {
+    display: flex;
+    height: 40px;
+    background-color: #e9ecef;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.timeline-date {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #495057;
+    border-right: 1px solid #dee2e6;
+}
+
+.timeline-row {
+    display: flex;
+    height: 60px;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.timeline-label {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-right: 2px solid #dee2e6;
+    font-weight: 500;
+}
+
+.timeline-bar-container {
+    flex: 1;
+    position: relative;
+    padding: 10px 0;
+}
+
+.timeline-bar {
+    position: absolute;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.timeline-bar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-bar.sprint-ativo {
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.timeline-bar.sprint-planejado {
+    background: linear-gradient(90deg, #007bff, #0056b3);
+}
+
+.timeline-bar.sprint-concluido {
+    background: linear-gradient(90deg, #6f42c1, #563d7c);
+}
+
+/* ==========================================================================
+   Modals
+   ========================================================================== */
+
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    padding: 20px 30px;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
 
 @media (max-width: 768px) {
-  #scrumban-kanban {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
+    .kanban-board {
+        flex-direction: column;
+    }
+    
+    .kanban-column {
+        min-width: 100%;
+    }
+    
+    .board-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .backlog-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: 100%;
+    }
+    
+    .sprints-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .timeline-grid {
+        grid-template-columns: 150px 1fr;
+    }
+    
+    .item-actions {
+        flex-direction: column;
+    }
+}
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }

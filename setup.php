@@ -2,45 +2,63 @@
 
 define('PLUGIN_SCRUMBAN_VERSION', '1.0.0');
 
-define('PLUGIN_SCRUMBAN_ROOT', __DIR__);
-
-define('PLUGIN_SCRUMBAN_CLASS_PATH', PLUGIN_SCRUMBAN_ROOT . '/inc');
-
-define('PLUGIN_SCRUMBAN_FRONT_PATH', '/plugins/scrumban/front');
-
+/**
+ * Inicialização do plugin
+ */
 function plugin_init_scrumban() {
    global $PLUGIN_HOOKS;
 
+   // Incluir arquivo de inicialização
+   include_once(GLPI_ROOT . '/plugins/scrumban/init.php');
+
    $PLUGIN_HOOKS['csrf_compliant']['scrumban'] = true;
-
-   include_once __DIR__ . '/init.php';
-
+   
+   // Menu principal
    $PLUGIN_HOOKS['menu_toadd']['scrumban'] = [
       'tools' => 'PluginScrumbanMenu'
    ];
 
-   $PLUGIN_HOOKS['post_init']['scrumban'] = 'plugin_scrumban_post_init';
-
+   // CSS e JS
    $PLUGIN_HOOKS['add_css']['scrumban'] = [
       'css/scrumban.css'
    ];
-
+   
    $PLUGIN_HOOKS['add_javascript']['scrumban'] = [
       'js/scrumban.js'
    ];
+
+   // Hooks de item
+   $PLUGIN_HOOKS['item_add']['scrumban'] = [
+      'Ticket' => 'plugin_scrumban_item_add_ticket'
+   ];
+
+   $PLUGIN_HOOKS['item_update']['scrumban'] = [
+      'Ticket' => 'plugin_scrumban_item_update_ticket'
+   ];
+
+   // Registrar classes
+   Plugin::registerClass('PluginScrumbanBoard');
+   Plugin::registerClass('PluginScrumbanCard');
+   Plugin::registerClass('PluginScrumbanSprint');
+   Plugin::registerClass('PluginScrumbanBacklog');
+   Plugin::registerClass('PluginScrumbanColumn');
+   Plugin::registerClass('PluginScrumbanComment');
+   Plugin::registerClass('PluginScrumbanLabel');
+   Plugin::registerClass('PluginScrumbanAttachment');
+   Plugin::registerClass('PluginScrumbanMenu');
 }
 
-function plugin_scrumban_post_init() {
-   PluginScrumbanProfile::registerRights();
-}
-
+/**
+ * Informações da versão do plugin
+ */
 function plugin_version_scrumban() {
    return [
-      'name'           => __('Scrumban', 'scrumban'),
+      'name'           => 'Scrumban - Gestão Ágil',
       'version'        => PLUGIN_SCRUMBAN_VERSION,
-      'author'         => 'OpenAI Assistant',
-      'license'        => 'GPLv2+',
-      'homepage'       => 'https://glpi-project.org',
+      'author'         => 'Unitá Soluções Digitais',
+      'license'        => 'GPL v2+',
+      'homepage'       => '',
+      'minGlpiVersion' => '10.0.0',
       'requirements'   => [
          'glpi' => [
             'min' => '10.0.0'
@@ -52,17 +70,39 @@ function plugin_version_scrumban() {
    ];
 }
 
-function plugin_scrumban_check_prerequisites($verbose = false) {
+/**
+ * Verificar se o plugin pode ser instalado
+ */
+function plugin_scrumban_check_config($verbose = false) {
    if (version_compare(GLPI_VERSION, '10.0.0', '<')) {
       if ($verbose) {
-         echo __('Scrumban plugin requer GLPI 10.0.0 ou superior', 'scrumban');
+         echo "Este plugin requer GLPI versão 10.0.0 ou superior.";
       }
       return false;
    }
-
+   
    return true;
 }
 
-function plugin_scrumban_check_config($verbose = false) {
+/**
+ * Verificar se os pré-requisitos estão atendidos
+ */
+function plugin_scrumban_check_prerequisites($verbose = false) {
+   return plugin_scrumban_check_config($verbose);
+}
+
+/**
+ * Função chamada quando um ticket é adicionado
+ */
+function plugin_scrumban_item_add_ticket($item) {
+   // Integrar com cards do Scrumban se necessário
+   return true;
+}
+
+/**
+ * Função chamada quando um ticket é atualizado
+ */
+function plugin_scrumban_item_update_ticket($item) {
+   // Sincronizar mudanças com cards do Scrumban se necessário
    return true;
 }
